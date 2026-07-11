@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jubílate Antes – Calculadora Real</title>
+  <title>Jubílate Antes – Calculadora Real de Libertad</title>
   <link href="styles.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,14 +18,20 @@
 <section class="hero">
   <div class="hero-content">
     <h1>Tu libertad tiene fecha.</h1>
-    <p>Descubre cuánto dinero necesitas para jubilarte a la edad que deseas y cómo llegar antes.</p>
+    <p>
+      Descubre cuánto dinero necesitas para jubilarte a la edad que deseas
+      y cómo adelantar esa fecha con decisiones concretas.
+    </p>
     <button class="btn-primary" onclick="scrollToForm()">Calcular mi libertad</button>
   </div>
 </section>
 
 <section id="form" class="form-section">
   <h2>Calculadora de libertad</h2>
-  <p class="section-sub">Rellena estos datos y te explicamos por qué falta dinero y cómo mejorar.</p>
+  <p class="section-sub">
+    Rellena estos datos y te explicamos por qué te falta dinero, cuándo llegarías
+    y cómo adelantar tu jubilación con cálculos reales.
+  </p>
 
   <div class="form-grid">
 
@@ -37,7 +43,7 @@
       <input type="number" id="edadObjetivo" value="60">
     </label>
 
-    <label>Dinero ahorrado (€)
+    <label>Dinero ahorrado actualmente (€)
       <input type="number" id="capitalActual" value="50000">
     </label>
 
@@ -45,11 +51,11 @@
       <input type="number" id="ahorroMensual" value="300">
     </label>
 
-    <label>Dinero mensual deseado en jubilación (€)
+    <label>Ingreso mensual deseado en jubilación (€)
       <input type="number" id="dineroMensual" value="2000">
     </label>
 
-    <label>Pensión mensual estimada (€)
+    <label>Pensión pública estimada (€ / mes)
       <input type="number" id="pensionMensual" value="0">
     </label>
 
@@ -71,7 +77,7 @@
 </section>
 
 <footer class="footer">
-  <p>Jubílate Antes © 2026</p>
+  <p>Jubílate Antes © 2026 · Cálculos orientativos, no asesoramiento financiero.</p>
 </footer>
 
 <script src="main.js"></script>
