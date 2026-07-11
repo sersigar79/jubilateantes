@@ -32,6 +32,9 @@ body {
   font-size: 18px;
   margin-bottom: 24px;
   color: #555;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .btn-primary {
@@ -52,6 +55,18 @@ body {
 
 .form-section {
   padding: 60px 40px;
+}
+
+.form-section h2 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.section-sub {
+  font-size: 15px;
+  color: #666;
+  margin-bottom: 24px;
+  max-width: 640px;
 }
 
 .form-grid {
@@ -77,6 +92,11 @@ input {
 
 .result-section {
   padding: 60px 40px;
+}
+
+.result-section h2 {
+  font-size: 28px;
+  margin-bottom: 8px;
 }
 
 .resultado-principal {
@@ -118,5 +138,14 @@ input {
 @media (max-width: 900px) {
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 60px 20px;
+  }
+
+  .form-section,
+  .result-section {
+    padding: 40px 20px;
   }
 }
