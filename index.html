@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jubílate Antes – Calculadora de Libertad Financiera</title>
+  <title>Jubílate Antes – Estilo Apple</title>
   <link href="styles.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,44 +11,24 @@
 
 <body>
 
-<header>
-  <nav>
-    <div class="logo">Jubílate Antes</div>
-    <ul>
-      <li><a href="#form">Simulación</a></li>
-      <li><a href="#resultados">Resultados</a></li>
-      <li><a href="#sobre">Sobre</a></li>
-      <li>
-        <select id="lang" onchange="cambiarIdioma()">
-          <option value="es">ES</option>
-          <option value="en">EN</option>
-        </select>
-      </li>
-    </ul>
-  </nav>
+<header class="header">
+  <div class="logo">Jubílate Antes</div>
 </header>
 
 <section class="hero">
-  <div class="hero-text">
-    <h1 data-es="¿Cuánto te falta para escapar de reuniones absurdas y jefes que gritan?"
-        data-en="How long until you can escape pointless meetings and yelling bosses?"></h1>
-
-    <p data-es="Calcula cuándo podrás dejar atrás el estrés y recuperar tu vida."
-       data-en="Find out when you can leave stress behind and get your life back."></p>
-
-    <button onclick="scrollToForm()" class="btn-primary"
-            data-es="Empieza ahora" data-en="Start now"></button>
+  <div class="hero-content">
+    <h1>Tu libertad tiene fecha.</h1>
+    <p>Descubre cuánto dinero necesitas para jubilarte a la edad que deseas.</p>
+    <button onclick="scrollToForm()" class="btn-primary">Calcular mi libertad</button>
   </div>
 
-  <div class="hero-img">
-    <img src="https://images.unsplash.com/photo-1521737604893-0f3c6a4ca0f3"
-         alt="Reunión en oficina con jefe enfadado y empleado cansado">
-  </div>
+  <img class="hero-img" 
+       src="https://images.unsplash.com/photo-1521737604893-0f3c6a4ca0f3"
+       alt="Empleado cansado en reunión con jefe enfadado">
 </section>
 
-
 <section id="form" class="form-section">
-  <h2 data-es="Datos básicos" data-en="Basic data"></h2>
+  <h2>Tu situación actual</h2>
 
   <div class="form-grid">
 
@@ -57,82 +37,32 @@
     </label>
 
     <label>Edad objetivo de jubilación
-      <input type="number" id="edadObjetivo" value="65">
+      <input type="number" id="edadObjetivo" value="60">
     </label>
 
-    <label>País
-      <select id="pais">
-        <option value="es">España</option>
-        <option value="uk">Reino Unido</option>
-        <option value="us">Estados Unidos</option>
-        <option value="de">Alemania</option>
-      </select>
-    </label>
-
-    <label>Edad cuando empezaste a trabajar
-      <input type="number" id="edadInicioTrabajo" value="25">
-    </label>
-
-    <label>Años cotizados (calculado automáticamente)
-      <input type="number" id="aniosCotizados" readonly>
-    </label>
-
-    <label>Ingresos actuales (€ / año)
-      <input type="number" id="ingresosActuales" value="30000">
-    </label>
-
-    <label>Ahorro mensual (€)
-      <input type="number" id="ahorroMensual" value="500">
-    </label>
-
-    <label>Capital actual (€)
+    <label>Dinero ahorrado (€)
       <input type="number" id="capitalActual" value="50000">
-    </label>
-
-    <label>Gasto anual deseado cuando te jubiles (€)
-      <input type="number" id="gastoAnualJubilacion" value="20000">
-    </label>
-
-    <label>Ingresos pasivos (€ / año)
-      <input type="number" id="ingresosPasivos" value="0">
-    </label>
-
-    <label>Pensión pública estimada (€ / año)
-      <input type="number" id="pensionPublica" value="0">
-    </label>
-
-    <label>Inflación esperada (%)
-      <input type="number" id="inflacion" value="2.5">
-    </label>
-
-    <label>Rentabilidad esperada (%)
-      <input type="number" id="rentabilidad" value="6">
-    </label>
-
-    <label>Herencia / premio (€)
-      <input type="number" id="loteria" value="0">
     </label>
 
   </div>
 
-  <button class="btn-primary" onclick="calcular()" data-es="Calcular" data-en="Calculate"></button>
+  <button class="btn-primary" onclick="calcular()">Calcular</button>
 </section>
 
 <section id="resultados" class="result-section">
-  <h2 data-es="Tu resultado" data-en="Your result"></h2>
+  <h2>Resultado</h2>
 
   <p id="resultadoTexto"></p>
   <p id="subResultado"></p>
-  <p id="veredicto"></p>
 
   <canvas id="grafica"></canvas>
 
-  <h3 data-es="Casos y ejemplos" data-en="Cases and examples"></h3>
+  <h3>Cómo puedes llegar antes</h3>
   <ul id="accionesLista"></ul>
 </section>
 
-<footer>
-  <p>Jubílate Antes © 2026 – Herramienta orientativa.</p>
+<footer class="footer">
+  <p>Jubílate Antes © 2026</p>
 </footer>
 
 <script src="main.js"></script>
