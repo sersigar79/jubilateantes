@@ -2,71 +2,108 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Calculadora de Jubilación Anticipada</title>
+  <title>FutureYou – Calculadora de Jubilación Anticipada</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
-  <header>
-    <h1>Calculadora de Jubilación Anticipada</h1>
-    <p>Descubre cuándo podrías jubilarte y cuánto necesitas ahorrar o ganar.</p>
+
+  <!-- HEADER CON LOGO -->
+  <header class="topbar">
+    <div class="logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" alt="FutureYou Logo">
+      <span>FutureYou</span>
+    </div>
+    <nav>
+      <a href="#form">Simulación</a>
+      <a href="#result">Resultados</a>
+      <a href="#about">Sobre nosotros</a>
+    </nav>
   </header>
 
-  <section class="form-section">
-    <h2>Tus datos</h2>
+  <!-- HERO CON IMAGEN -->
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Descubre el año exacto en el que podrás jubilarte</h1>
+      <p>Simulaciones profesionales, visuales y fáciles de entender.</p>
+      <button class="cta" onclick="scrollToForm()">Empieza ahora</button>
+    </div>
 
-    <label>Edad actual:
-      <input type="number" id="edadActual" value="40">
-    </label>
-
-    <label>Edad objetivo de jubilación:
-      <input type="number" id="edadObjetivo" value="55">
-    </label>
-
-    <label>Gasto anual deseado (euros de hoy):
-      <input type="number" id="gastoAnual" value="30000">
-    </label>
-
-    <label>Inflación esperada (%):
-      <input type="number" id="inflacion" value="2.5" step="0.1">
-    </label>
-
-    <label>Rentabilidad esperada (%):
-      <input type="number" id="rentabilidad" value="6" step="0.1">
-    </label>
-
-    <label>Capital actual total (€):
-      <input type="number" id="capitalActual" value="50000">
-    </label>
-
-    <label>Ahorro anual futuro (€):
-      <input type="number" id="aportacionAnual" value="12000">
-    </label>
-
-    <label>Premio de lotería / herencia (€):
-      <input type="number" id="loteria" value="0">
-    </label>
-
-    <label>Ingresos pasivos anuales (alquileres, etc.) (€):
-      <input type="number" id="ingresosPasivos" value="0">
-    </label>
-
-    <label>Pensión pública estimada (€ / año):
-      <input type="number" id="pensionPublica" value="0">
-    </label>
-
-    <button onclick="calcular()">Calcular</button>
+    <div class="hero-img">
+      <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d" alt="Jubilación feliz">
+    </div>
   </section>
 
-  <section class="result-section">
-    <h2>Resultado</h2>
-    <p id="resultadoTexto"></p>
+  <!-- FORMULARIO -->
+  <section id="form" class="form-section">
+    <h2>Introduce tus datos</h2>
+
+    <div class="form-grid">
+      <label>Edad actual
+        <input type="number" id="edadActual" value="40">
+      </label>
+
+      <label>Edad objetivo de jubilación
+        <input type="number" id="edadObjetivo" value="55">
+      </label>
+
+      <label>Gasto anual deseado
+        <input type="number" id="gastoAnual" value="30000">
+      </label>
+
+      <label>Inflación esperada (%)
+        <input type="number" id="inflacion" value="2.5" step="0.1">
+      </label>
+
+      <label>Rentabilidad esperada (%)
+        <input type="number" id="rentabilidad" value="6" step="0.1">
+      </label>
+
+      <label>Capital actual (€)
+        <input type="number" id="capitalActual" value="50000">
+      </label>
+
+      <label>Ahorro anual futuro (€)
+        <input type="number" id="aportacionAnual" value="12000">
+      </label>
+
+      <label>Herencia / premio (€)
+        <input type="number" id="loteria" value="0">
+      </label>
+
+      <label>Ingresos pasivos (€ / año)
+        <input type="number" id="ingresosPasivos" value="0">
+      </label>
+
+      <label>Pensión pública (€ / año)
+        <input type="number" id="pensionPublica" value="0">
+      </label>
+    </div>
+
+    <button class="calculate-btn" onclick="calcular()">Calcular mi jubilación</button>
+  </section>
+
+  <!-- RESULTADOS -->
+  <section id="result" class="result-section">
+    <h2>Tu resultado</h2>
+
+    <div id="resultadoCard" class="resultado-card">
+      <h3 id="resultadoTexto">Introduce tus datos para calcular tu año de jubilación.</h3>
+      <p id="subResultado"></p>
+    </div>
+
     <canvas id="grafica"></canvas>
+
+    <div class="acciones">
+      <h3>Cómo adelantar tu jubilación</h3>
+      <ul id="accionesLista"></ul>
+    </div>
   </section>
 
+  <!-- FOOTER -->
   <footer>
-    <p>Herramienta orientativa. No es asesoramiento financiero.</p>
+    <p>FutureYou © 2026 – Herramienta orientativa, no asesoramiento financiero.</p>
   </footer>
 
   <script src="main.js"></script>
