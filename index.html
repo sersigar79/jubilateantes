@@ -1,84 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jubílate Antes – Calculadora Real de Libertad</title>
-  <link href="styles.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retiro — simulador de jubilación anticipada en España</title>
+<meta name="description" content="Calcula cuándo puedes jubilarte en España, cuánto capital necesitas y qué pensión pública te corresponde. Incluye calculadora de lotería y herencias.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </head>
-
 <body>
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Simulador de jubilación anticipada</p>
+    <h1>¿Cuándo puedes <em>parar</em> de trabajar?</h1>
+    <p class="sub">Junta tu patrimonio, tus otros ingresos y tu pensión pública española en una sola cuenta, y descubre a qué edad tu dinero te sostiene.</p>
+  </header>
 
-<header class="header">
-  <div class="logo">Jubílate Antes</div>
-</header>
-
-<section class="hero">
-  <div class="hero-content">
-    <h1>Tu libertad tiene fecha.</h1>
-    <p>
-      Descubre cuánto dinero necesitas para jubilarte a la edad que deseas
-      y cómo adelantar esa fecha con decisiones concretas.
-    </p>
-    <button class="btn-primary" onclick="scrollToForm()">Calcular mi libertad</button>
-  </div>
-</section>
-
-<section id="form" class="form-section">
-  <h2>Calculadora de libertad</h2>
-  <p class="section-sub">
-    Rellena estos datos y te explicamos por qué te falta dinero, cuándo llegarías
-    y cómo adelantar tu jubilación con cálculos reales.
-  </p>
-
-  <div class="form-grid">
-
-    <label>Edad actual
-      <input type="number" id="edadActual" value="40">
-    </label>
-
-    <label>Edad objetivo de jubilación
-      <input type="number" id="edadObjetivo" value="60">
-    </label>
-
-    <label>Dinero ahorrado actualmente (€)
-      <input type="number" id="capitalActual" value="50000">
-    </label>
-
-    <label>Ahorro mensual actual (€)
-      <input type="number" id="ahorroMensual" value="300">
-    </label>
-
-    <label>Ingreso mensual deseado en jubilación (€)
-      <input type="number" id="dineroMensual" value="2000">
-    </label>
-
-    <label>Pensión pública estimada (€ / mes)
-      <input type="number" id="pensionMensual" value="0">
-    </label>
-
+  <div class="disclaimer">
+    <b>Aviso:</b> esta herramienta es meramente informativa y educativa. No constituye asesoramiento financiero, fiscal, laboral ni jurídico, ni un cálculo oficial de la Seguridad Social. Los resultados son estimaciones basadas en supuestos simplificados que tú introduces y pueden diferir sustancialmente del importe real. No se garantiza su exactitud ni actualización. Antes de tomar cualquier decisión sobre tu jubilación, consulta con un asesor financiero colegiado y usa el <a href="https://www.seg-social.es" target="_blank" rel="noopener">simulador oficial de la Seguridad Social</a>. El uso de esta web implica la aceptación de estas condiciones — ver <button class="link-btn" onclick="toggleLegal()">aviso legal completo</button>.
   </div>
 
-  <button class="btn-primary" onclick="calcular()">Calcular</button>
-</section>
+  <nav class="tabs" id="tabs"></nav>
 
-<section id="resultados" class="result-section">
-  <h2>Tu resultado</h2>
+  <div id="panel-patrimonio" class="tabpanel"></div>
+  <div id="panel-ingresos" class="tabpanel"></div>
+  <div id="panel-objetivo" class="tabpanel"></div>
+  <div id="panel-combinado" class="tabpanel"></div>
+  <div id="panel-escenarios" class="tabpanel"></div>
+  <div id="panel-loteria" class="tabpanel"></div>
 
-  <p id="resultadoTexto" class="resultado-principal"></p>
-  <p id="subResultado" class="resultado-secundario"></p>
-
-  <canvas id="grafica"></canvas>
-
-  <h3>Cómo llegar antes</h3>
-  <ul id="accionesLista" class="acciones-lista"></ul>
-</section>
-
-<footer class="footer">
-  <p>Jubílate Antes © 2026 · Cálculos orientativos, no asesoramiento financiero.</p>
-</footer>
+  <footer>
+    Modelo orientativo, sin ninguna validez oficial. La base reguladora real se calcula con tus bases de cotización mensuales de los últimos 25 años (o 27 de los últimos 29, lo que sea más favorable), no con un salario medio estimado. Todos los cálculos se realizan en tu navegador — no se envían ni almacenan tus datos.
+    <div id="legal-full" class="legal-full">
+      <h3>1. Naturaleza del servicio</h3>
+      <p>Esta web ofrece una calculadora de finanzas personales de carácter puramente informativo y educativo. No presta servicios de asesoramiento financiero, fiscal, legal ni de intermediación regulada, y no está supervisada por la CNMV, el Banco de España ni la Seguridad Social.</p>
+      <h3>2. Exactitud de los resultados</h3>
+      <p>Los cálculos se basan en fórmulas simplificadas y en los datos que el propio usuario introduce. No garantizamos su exactitud, vigencia normativa ni idoneidad para ningún caso concreto. La normativa de pensiones y fiscalidad cambia con frecuencia; los parámetros usados pueden no reflejar la legislación vigente en el momento de tu consulta.</p>
+      <h3>3. Exclusión de responsabilidad</h3>
+      <p>El titular de esta web no asume responsabilidad alguna por decisiones financieras, laborales o de jubilación que el usuario adopte basándose en los resultados de esta herramienta, ni por daños o perjuicios directos o indirectos derivados de su uso.</p>
+      <h3>4. Datos personales</h3>
+      <p>Los datos que introduces en el simulador se procesan localmente en tu navegador y no se envían a ningún servidor salvo que la web incorpore explícitamente analítica o publicidad, en cuyo caso se detallará en la política de privacidad correspondiente conforme al RGPD y la LOPDGDD.</p>
+      <p style="margin-top:14px;color:var(--faint);">Este texto es un punto de partida orientativo, no un aviso legal certificado. Antes de publicar la web con tráfico real, encarga su revisión a un abogado especializado en derecho digital.</p>
+    </div>
+  </footer>
+</div>
 
 <script src="main.js"></script>
 </body>
