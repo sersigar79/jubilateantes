@@ -8,6 +8,7 @@ function calcular() {
   const edadActual = Number(document.getElementById('edadActual').value);
   const edadObjetivo = Number(document.getElementById('edadObjetivo').value);
   const capitalActual = Number(document.getElementById('capitalActual').value);
+  const ahorroMensual = Number(document.getElementById('ahorroMensual').value);
   const dineroMensual = Number(document.getElementById('dineroMensual').value);
   const pensionMensual = Number(document.getElementById('pensionMensual').value);
 
@@ -26,7 +27,6 @@ function calcular() {
   const dineroNetoAnual = dineroNetoMensual * 12;
 
   const capitalNecesario = dineroNetoAnual * 25;
-
   const falta = Math.max(capitalNecesario - capitalActual, 0);
 
   const resultadoTexto = document.getElementById('resultadoTexto');
@@ -44,42 +44,62 @@ function calcular() {
 
   const li1 = document.createElement('li');
   li1.textContent =
-    `Ahorrar unos ${Math.round(ahorroMensualNecesario)} € al mes te permite llegar a tiempo.`;
+    `Si ahorras ${Math.round(ahorroMensualNecesario)} € al mes, llegarás a tiempo.`;
 
   const li2 = document.createElement('li');
   li2.textContent =
-    `Reducir tu gasto mensual en esa cantidad también te acerca sin necesidad de ganar más.`;
+    `Si ahorras un 10% más (${Math.round(ahorroMensual * 1.1)} €), llegarás antes.`;
 
   const li3 = document.createElement('li');
   li3.textContent =
-    `Si aumentas tus ingresos en ${Math.round(ahorroMensualNecesario)} € al mes (side projects, ventas, consultoría), aceleras tu libertad.`;
+    `Si ahorras un 20% más (${Math.round(ahorroMensual * 1.2)} €), adelantas varios años tu libertad.`;
 
   accionesLista.appendChild(li1);
   accionesLista.appendChild(li2);
   accionesLista.appendChild(li3);
 
-  dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesario, rentabilidad, años);
+  dibujarGrafica(
+    edadActual,
+    edadObjetivo,
+    capitalActual,
+    capitalNecesario,
+    ahorroMensual,
+    rentabilidad,
+    años
+  );
 }
 
-function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesario, rentabilidad, años) {
+function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesario, ahorroMensual, rentabilidad, años) {
   const edades = [];
-  const capitales = [];
+  const capitalBase = [];
+  const capital10 = [];
+  const capital20 = [];
   const necesarios = [];
 
-  let capital = capitalActual;
-  const ahorroMensual = (capitalNecesario - capitalActual) / (años * 12);
+  let capBase = capitalActual;
+  let cap10 = capitalActual;
+  let cap20 = capitalActual;
+
   const ahorroAnual = ahorroMensual * 12;
+  const ahorroAnual10 = ahorroMensual * 1.1 * 12;
+  const ahorroAnual20 = ahorroMensual * 1.2 * 12;
 
   for (let edad = edadActual; edad <= edadObjetivo; edad++) {
     edades.push(edad);
-    capitales.push(Math.round(capital));
 
-    const añosHasta = edad - edadActual;
-    const necesario = capitalNecesario;
-    necesarios.push(Math.round(necesario));
+    capitalBase.push(Math.round(capBase));
+    capital10.push(Math.round(cap10));
+    capital20.push(Math.round(cap20));
+    necesarios.push(Math.round(capitalNecesario));
 
-    capital += ahorroAnual;
-    capital *= (1 + rentabilidad);
+    capBase += ahorroAnual;
+    capBase *= (1 + rentabilidad);
+
+    cap10 += ahorroAnual10;
+    cap10 *= (1 + rentabilidad);
+
+    cap20 += ahorroAnual20;
+    cap20 *= (1 + rentabilidad);
   }
 
   const ctx = document.getElementById('grafica').getContext('2d');
@@ -91,18 +111,34 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
       labels: edades,
       datasets: [
         {
-          label: 'Capital estimado (€)',
-          data: capitales,
+          label: 'Capital actual proyectado',
+          data: capitalBase,
           borderColor: '#0071e3',
           backgroundColor: 'rgba(0, 113, 227, 0.08)',
           tension: 0.25,
           fill: true
         },
         {
-          label: 'Capital necesario (€)',
-          data: necesarios,
+          label: 'Ahorrando +10%',
+          data: capital10,
+          borderColor: '#34c759',
+          backgroundColor: 'rgba(52, 199, 89, 0.08)',
+          tension: 0.25,
+          fill: false
+        },
+        {
+          label: 'Ahorrando +20%',
+          data: capital20,
           borderColor: '#ff9500',
-          backgroundColor: 'rgba(255, 149, 0, 0.05)',
+          backgroundColor: 'rgba(255, 149, 0, 0.08)',
+          tension: 0.25,
+          fill: false
+        },
+        {
+          label: 'Capital necesario',
+          data: necesarios,
+          borderColor: '#ff3b30',
+          backgroundColor: 'rgba(255, 59, 48, 0.08)',
           tension: 0.25,
           fill: false
         }
