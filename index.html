@@ -2,179 +2,132 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jubílate Antes – Calculadora de Libertad Financiera</title>
-  <link rel="stylesheet" href="styles.css">
+  <link href="styles.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
-  <!-- HEADER -->
-  <header class="topbar">
-    <div class="logo">
-      <img src="https://cdn-icons-png.flaticon.com/512/921/921490.png" alt="Logo">
-      <span data-es="Jubílate Antes" data-en="Retire Earlier">Jubílate Antes</span>
-    </div>
-
-    <nav>
-      <a href="#form" data-es="Simulación" data-en="Planner">Simulación</a>
-      <a href="#result" data-es="Resultados" data-en="Results">Resultados</a>
-      <a href="#about" data-es="Sobre" data-en="About">Sobre</a>
-    </nav>
-
-    <select id="lang" class="lang-switch" onchange="cambiarIdioma()">
-      <option value="es">ES</option>
-      <option value="en">EN</option>
-    </select>
-  </header>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-text">
-      <h1 data-es="¿Cuándo podrás jubilarte?" data-en="When can you retire?">
-        ¿Cuándo podrás jubilarte?
-      </h1>
-      <p data-es="Descubre si podrás vivir bien cuando te jubiles."
-         data-en="Find out if you can live well when you retire.">
-        Descubre si podrás vivir bien cuando te jubiles.
-      </p>
-      <button class="cta" onclick="scrollToForm()"
-        data-es="Empieza ahora" data-en="Start now">Empieza ahora</button>
-    </div>
-
-    <div class="hero-img">
-      <img src="https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e" alt="Pareja viajando">
-    </div>
-  </section>
-
-  <!-- FORMULARIO -->
-  <section id="form" class="form-section">
-    <h2 data-es="Datos básicos" data-en="Basic data">Datos básicos</h2>
-
-    <div class="form-grid">
-      <label data-es="Edad actual" data-en="Current age">
-        Edad actual
-        <input type="number" id="edadActual" value="40">
-      </label>
-
-      <label data-es="Edad objetivo de jubilación" data-en="Target retirement age">
-        Edad objetivo de jubilación
-        <input type="number" id="edadObjetivo" value="65">
-      </label>
-
-      <label data-es="País" data-en="Country">
-        País
-        <select id="pais">
-          <option value="es">España</option>
-          <option value="us">Estados Unidos</option>
-          <option value="uk">Reino Unido</option>
-          <option value="de">Alemania</option>
-          <option value="other">Otro</option>
+<header>
+  <nav>
+    <div class="logo">Jubílate Antes</div>
+    <ul>
+      <li><a href="#form">Simulación</a></li>
+      <li><a href="#resultados">Resultados</a></li>
+      <li><a href="#sobre">Sobre</a></li>
+      <li>
+        <select id="lang" onchange="cambiarIdioma()">
+          <option value="es">ES</option>
+          <option value="en">EN</option>
         </select>
-      </label>
+      </li>
+    </ul>
+  </nav>
+</header>
 
-      <label data-es="Edad cuando empezaste a trabajar" data-en="Age when you started working">
-        Edad cuando empezaste a trabajar
-        <input type="number" id="edadInicioTrabajo" value="25">
-      </label>
+<section class="hero">
+  <div class="hero-text">
+    <h1 data-es="¿Cuándo podrás jubilarte?" data-en="When will you be able to retire?"></h1>
+    <p data-es="Descubre si podrás vivir bien cuando te jubiles." data-en="Find out if you can live well when you retire."></p>
+    <button onclick="scrollToForm()" class="btn-primary" data-es="Empieza ahora" data-en="Start now"></button>
+  </div>
 
-      <label data-es="Años cotizados (editable)" data-en="Years contributed (editable)">
-        Años cotizados (editable)
-        <input type="number" id="aniosCotizados" value="15">
-      </label>
-    </div>
+  <div class="hero-img">
+    <img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb" alt="Pareja adulta viajando y sonriendo">
+  </div>
+</section>
 
-    <h2 data-es="Ingresos y ahorro" data-en="Income & savings">Ingresos y ahorro</h2>
+<section id="form" class="form-section">
+  <h2 data-es="Datos básicos" data-en="Basic data"></h2>
 
-    <div class="form-grid">
-      <label data-es="Ingresos actuales (€ / año)" data-en="Current income (€/year)">
-        Ingresos actuales (€ / año)
-        <input type="number" id="ingresosActuales" value="40000">
-      </label>
+  <div class="form-grid">
 
-      <label data-es="Ahorro mensual (€)" data-en="Monthly savings (€)">
-        Ahorro mensual (€)
-        <input type="number" id="ahorroMensual" value="500">
-      </label>
+    <label>Edad actual
+      <input type="number" id="edadActual" value="40">
+    </label>
 
-      <label data-es="Capital actual (€)" data-en="Current capital (€)">
-        Capital actual (€)
-        <input type="number" id="capitalActual" value="50000">
-      </label>
-    </div>
+    <label>Edad objetivo de jubilación
+      <input type="number" id="edadObjetivo" value="65">
+    </label>
 
-    <h2 data-es="Vida en jubilación" data-en="Life in retirement">Vida en jubilación</h2>
+    <label>País
+      <select id="pais">
+        <option value="es">España</option>
+        <option value="uk">Reino Unido</option>
+        <option value="us">Estados Unidos</option>
+        <option value="de">Alemania</option>
+      </select>
+    </label>
 
-    <div class="form-grid">
-      <label data-es="Gasto anual deseado cuando te jubiles (€)"
-             data-en="Desired annual spending in retirement (€)">
-        Gasto anual deseado cuando te jubiles (€)
-        <input type="number" id="gastoAnualJubilacion" value="30000">
-      </label>
+    <label>Edad cuando empezaste a trabajar
+      <input type="number" id="edadInicioTrabajo" value="25">
+    </label>
 
-      <label data-es="Ingresos pasivos (€ / año)" data-en="Passive income (€/year)">
-        Ingresos pasivos (€ / año)
-        <input type="number" id="ingresosPasivos" value="0">
-      </label>
+    <label>Años cotizados (calculado automáticamente)
+      <input type="number" id="aniosCotizados" readonly>
+    </label>
 
-      <label data-es="Pensión pública estimada (€ / año)" data-en="Estimated public pension (€/year)">
-        Pensión pública estimada (€ / año)
-        <input type="number" id="pensionPublica" value="0">
-      </label>
-    </div>
+    <label>Ingresos actuales (€ / año)
+      <input type="number" id="ingresosActuales" value="30000">
+    </label>
 
-    <h2 data-es="Supuestos financieros" data-en="Financial assumptions">Supuestos financieros</h2>
+    <label>Ahorro mensual (€)
+      <input type="number" id="ahorroMensual" value="500">
+    </label>
 
-    <div class="form-grid">
-      <label data-es="Inflación esperada (%)" data-en="Expected inflation (%)">
-        Inflación esperada (%)
-        <input type="number" id="inflacion" value="2.5" step="0.1">
-      </label>
+    <label>Capital actual (€)
+      <input type="number" id="capitalActual" value="50000">
+    </label>
 
-      <label data-es="Rentabilidad esperada (%)" data-en="Expected return (%)">
-        Rentabilidad esperada (%)
-        <input type="number" id="rentabilidad" value="6" step="0.1">
-      </label>
+    <label>Gasto anual deseado cuando te jubiles (€)
+      <input type="number" id="gastoAnualJubilacion" value="20000">
+    </label>
 
-      <label data-es="Herencia / premio (€)" data-en="Inheritance / lottery (€)">
-        Herencia / premio (€)
-        <input type="number" id="loteria" value="0">
-      </label>
-    </div>
+    <label>Ingresos pasivos (€ / año)
+      <input type="number" id="ingresosPasivos" value="0">
+    </label>
 
-    <button class="calculate-btn" onclick="calcular()"
-      data-es="Calcular" data-en="Calculate">Calcular</button>
-  </section>
+    <label>Pensión pública estimada (€ / año)
+      <input type="number" id="pensionPublica" value="0">
+    </label>
 
-  <!-- RESULTADOS -->
-  <section id="result" class="result-section">
-    <h2 data-es="Tu resultado" data-en="Your result">Tu resultado</h2>
+    <label>Inflación esperada (%)
+      <input type="number" id="inflacion" value="2.5">
+    </label>
 
-    <div id="resultadoCard" class="resultado-card">
-      <h3 id="resultadoTexto"
-        data-es="Introduce tus datos para ver si puedes jubilarte a esa edad."
-        data-en="Enter your data to see if you can retire at that age.">
-        Introduce tus datos para ver si puedes jubilarte a esa edad.
-      </h3>
-      <p id="subResultado"></p>
-      <p id="veredicto"></p>
-    </div>
+    <label>Rentabilidad esperada (%)
+      <input type="number" id="rentabilidad" value="6">
+    </label>
 
-    <canvas id="grafica"></canvas>
+    <label>Herencia / premio (€)
+      <input type="number" id="loteria" value="0">
+    </label>
 
-    <div class="acciones">
-      <h3 data-es="Casos y ejemplos" data-en="Cases & examples">Casos y ejemplos</h3>
-      <ul id="accionesLista"></ul>
-    </div>
-  </section>
+  </div>
 
-  <footer>
-    <p data-es="Jubílate Antes © 2026 – Herramienta orientativa."
-       data-en="Retire Earlier © 2026 – Guidance only.">
-      Jubílate Antes © 2026 – Herramienta orientativa.
-    </p>
-  </footer>
+  <button class="btn-primary" onclick="calcular()" data-es="Calcular" data-en="Calculate"></button>
+</section>
 
-  <script src="main.js"></script>
+<section id="resultados" class="result-section">
+  <h2 data-es="Tu resultado" data-en="Your result"></h2>
+
+  <p id="resultadoTexto"></p>
+  <p id="subResultado"></p>
+  <p id="veredicto"></p>
+
+  <canvas id="grafica"></canvas>
+
+  <h3 data-es="Casos y ejemplos" data-en="Cases and examples"></h3>
+  <ul id="accionesLista"></ul>
+</section>
+
+<footer>
+  <p>Jubílate Antes © 2026 – Herramienta orientativa.</p>
+</footer>
+
+<script src="main.js"></script>
 </body>
 </html>
