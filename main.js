@@ -24,7 +24,8 @@ function calcular() {
   const pais = document.getElementById('pais').value;
 
   const edadInicioTrabajo = Number(document.getElementById('edadInicioTrabajo').value);
-  // Años cotizados SIEMPRE calculados por la herramienta
+
+  // AÑOS COTIZADOS AUTOMÁTICOS
   const aniosCotizados = Math.max(edadActual - edadInicioTrabajo, 0);
   document.getElementById('aniosCotizados').value = aniosCotizados;
 
@@ -129,10 +130,8 @@ function calcular() {
         : `❌ No, you cannot maintain your spending level at that age.`;
     }
 
-    // Casos cuando sí llegas
     generarAccionesCuandoSi(accionesLista, rentabilidad);
   } else {
-    // No llega: calculamos qué tendría que cambiar
     const añosHastaObjetivo = Math.max(edadObjetivo - edadActual, 0);
     const gastoAjustadoObjetivo =
       gastoAnualJubilacion * Math.pow(1 + inflacion, añosHastaObjetivo);
@@ -140,7 +139,6 @@ function calcular() {
     const gastoNetoObjetivo = Math.max(gastoAjustadoObjetivo - ingresosRecurrentesObjetivo, 0);
     const capitalNecesarioObjetivo = gastoNetoObjetivo * 25;
 
-    // Capital proyectado a la edad objetivo con el ahorro actual
     let capitalProyectado = capital;
     let edadTmp = edadActual;
     while (edadTmp < edadObjetivo) {
@@ -207,7 +205,6 @@ function calcular() {
   subResultado.textContent = mensajeSecundario;
   veredicto.textContent = mensajeVeredicto;
 
-  // Gráfica más clara: capital vs capital necesario y punto de cruce
   const ctx = document.getElementById('grafica').getContext('2d');
   if (chart) chart.destroy();
 
@@ -267,19 +264,19 @@ function generarAccionesCuandoSi(accionesLista, rentabilidad) {
   const acciones = [];
   if (currentLang === 'es') {
     acciones.push(
-      `• Mantener tu ahorro mensual y evitar subidas fuertes de gasto consolida tu jubilación anticipada.`,
-      `• Añadir nuevas fuentes de ingresos pasivos (acciones, inmuebles, proyectos online) reduce tu dependencia de la pensión.`,
-      `• Diversificar tu inversión (mercado de acciones global, fondos indexados, inmuebles en alquiler) puede darte más estabilidad.`,
-      `• Si tu trabajo actual no te aporta nada, puedes empezar a planificar una transición hacia trabajos mejor pagados o más alineados con tu vida.`,
-      `• Explora sectores con mejores sueldos: tecnología, data, salud digital, consultoría, ventas especializadas, etc.`
+      `• Mantener tu ahorro mensual consolida tu jubilación anticipada.`,
+      `• Añadir ingresos pasivos (acciones, ETFs, inmuebles, proyectos online) reduce tu dependencia de la pensión.`,
+      `• Diversificar inversiones te da más estabilidad.`,
+      `• Si tu trabajo te amarga, puedes planificar una transición hacia trabajos mejor pagados o más alineados con tu vida.`,
+      `• Sectores con mejores sueldos: tecnología, data, salud digital, consultoría, ventas especializadas.`
     );
   } else {
     acciones.push(
-      `• Keeping your monthly savings and avoiding strong spending increases consolidates early retirement.`,
-      `• Adding new passive income sources (stocks, real estate, online projects) reduces dependence on public pension.`,
-      `• Diversifying investments (global stock markets, index funds, rental properties) can give more stability.`,
-      `• If your current job feels meaningless, start planning a transition to better‑paid or more aligned roles.`,
-      `• Explore higher‑pay sectors: tech, data, digital health, consulting, specialized sales, etc.`
+      `• Keeping your monthly savings consolidates early retirement.`,
+      `• Adding passive income (stocks, ETFs, real estate, online projects) reduces dependence on pension.`,
+      `• Diversifying investments gives more stability.`,
+      `• If your job drains you, plan a transition to better‑paid or more aligned roles.`,
+      `• High‑pay sectors: tech, data, digital health, consulting, specialized sales.`
     );
   }
 
@@ -302,21 +299,21 @@ function generarAccionesCuandoNo(
 
   if (currentLang === 'es') {
     acciones.push(
-      `• Caso 1: Para llegar a tu objetivo, deberías ahorrar aproximadamente ${Math.round(ahorroMensualNecesario)} € al mes.`,
-      `• Caso 2: Si reduces tu gasto anual en jubilación a unos ${Math.round(gastoAnualReducidoNecesario)} € al año, el capital necesario baja mucho.`,
-      `• Caso 3: Si aumentas tus ingresos hasta unos ${Math.round(ingresoMensualNecesario)} € al mes, podrás ahorrar más sin sacrificar tanto tu vida actual.`,
-      `• Caso 4: Subir tu rentabilidad esperada del ${Math.round(rentabilidadActual * 100)}% al entorno del ${Math.round(rentabilidadNecesaria * 100)}% (por ejemplo, usando fondos indexados globales, mercado de acciones, inmuebles en alquiler) acelera mucho el crecimiento.`,
-      `• Ideas de nuevos ingresos: proyectos online, consultoría freelance, formación, ventas de alto valor, alquiler de habitaciones o inmuebles, invertir en acciones y ETFs.`,
-      `• Si sientes que tu trabajo actual es una mierda, esta calculadora te da un mapa: cuánto necesitas cambiar para poder dejarlo antes y vivir mejor.`
+      `• Caso 1: Deberías ahorrar aproximadamente ${Math.round(ahorroMensualNecesario)} € al mes.`,
+      `• Caso 2: Reducir tu gasto anual a ${Math.round(gastoAnualReducidoNecesario)} € facilitaría mucho llegar.`,
+      `• Caso 3: Aumentar tus ingresos hasta ${Math.round(ingresoMensualNecesario)} € al mes te permitiría ahorrar más.`,
+      `• Caso 4: Subir tu rentabilidad del ${Math.round(rentabilidadActual * 100)}% al ${Math.round(rentabilidadNecesaria * 100)}% aceleraría tu libertad financiera.`,
+      `• Ideas de nuevos ingresos: proyectos online, consultoría freelance, formación, ventas de alto valor, alquiler de inmuebles, invertir en acciones y ETFs.`,
+      `• Si tu trabajo te amarga, esta calculadora te muestra cuánto debes cambiar para dejarlo antes y vivir mejor.`
     );
   } else {
     acciones.push(
-      `• Case 1: To reach your goal, you would need to save about ${Math.round(ahorroMensualNecesario)} € per month.`,
-      `• Case 2: If you reduce your annual retirement spending to around ${Math.round(gastoAnualReducidoNecesario)} € per year, the required capital drops a lot.`,
-      `• Case 3: If you increase your income to about ${Math.round(ingresoMensualNecesario)} € per month, you can save more without sacrificing too much now.`,
-      `• Case 4: Raising expected returns from ${Math.round(rentabilidadActual * 100)}% to around ${Math.round(rentabilidadNecesaria * 100)}% (e.g. global index funds, stock markets, rental properties) accelerates growth.`,
-      `• New income ideas: online projects, freelance consulting, training, high‑value sales, renting rooms or properties, investing in stocks and ETFs.`,
-      `• If your current job feels awful, this calculator gives you a map: how much you need to change to leave it earlier and live better.`
+      `• Case 1: You would need to save about ${Math.round(ahorroMensualNecesario)} € per month.`,
+      `• Case 2: Reducing your annual retirement spending to ${Math.round(gastoAnualReducidoNecesario)} € would help a lot.`,
+      `• Case 3: Increasing your income to ${Math.round(ingresoMensualNecesario)} € per month would allow more savings.`,
+      `• Case 4: Raising your return from ${Math.round(rentabilidadActual * 100)}% to ${Math.round(rentabilidadNecesaria * 100)}% accelerates financial freedom.`,
+      `• New income ideas: online projects, freelance consulting, training, high‑value sales, rental properties, investing in stocks and ETFs.`,
+      `• If your job drains you, this tool shows how much you must change to leave it earlier.`
     );
   }
 
@@ -341,7 +338,6 @@ function estimarPension(pais, ingresos, aniosTotales) {
   }
 }
 
-// Cálculo aproximado del ahorro mensual necesario para llegar al capital objetivo
 function calcularAhorroMensualNecesario(
   capitalInicial,
   capitalObjetivo,
@@ -359,14 +355,12 @@ function calcularAhorroMensualNecesario(
   return ahorroAnualNecesario / 12;
 }
 
-// Gasto anual máximo que podrías permitirte con el capital proyectado
 function calcularGastoReducidoNecesario(capitalProyectado, ingresosRecurrentesObjetivo) {
   const retiroSeguro = capitalProyectado * 0.04;
   const gastoAnualMaximo = retiroSeguro + ingresosRecurrentesObjetivo;
   return gastoAnualMaximo;
 }
 
-// Ingreso mensual necesario para sostener el gasto deseado
 function calcularIngresoMensualNecesario(
   capitalProyectado,
   gastoAnualJubilacion,
@@ -379,7 +373,6 @@ function calcularIngresoMensualNecesario(
   return ingresosAnualesNecesarios / 12;
 }
 
-// Rentabilidad necesaria para llegar al capital objetivo con el ahorro actual
 function calcularRentabilidadNecesaria(
   capitalInicial,
   capitalObjetivo,
@@ -390,7 +383,6 @@ function calcularRentabilidadNecesaria(
   const años = Math.max(edadObjetivo - edadActual, 0);
   if (años <= 0) return null;
 
-  // Búsqueda aproximada de rentabilidad (iterativa)
   let r = 0.01;
   let paso = 0.005;
   for (let i = 0; i < 200; i++) {
