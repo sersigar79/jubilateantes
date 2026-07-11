@@ -13,63 +13,41 @@ function calcular() {
   const pensionMensual = Number(document.getElementById('pensionMensual').value);
 
   const años = edadObjetivo - edadActual;
+  const resultadoTexto = document.getElementById('resultadoTexto');
+  const subResultado = document.getElementById('subResultado');
+  const accionesLista = document.getElementById('accionesLista');
+
   if (años <= 0) {
-    document.getElementById('resultadoTexto').textContent =
+    resultadoTexto.textContent =
       'La edad de jubilación debe ser mayor que la edad actual.';
+    subResultado.textContent = '';
+    accionesLista.innerHTML = '';
     return;
   }
 
   const inflacion = 0.025;
   const rentabilidad = 0.06;
 
-  const dineroMensualAjustado = dineroMensual * Math.pow(1 + inflacion, años);
-  const dineroNetoMensual = Math.max(dineroMensualAjustado - pensionMensual, 0);
-  const dineroNetoAnual = dineroNetoMensual * 12;
+  // Capital necesario a la edad objetivo (referencia)
+  const dineroMensualAjustadoObjetivo = dineroMensual * Math.pow(1 + inflacion, años);
+  const pensionAplicadaObjetivo = edadObjetivo >= 67 ? pensionMensual : 0;
+  const dineroNetoMensualObjetivo = Math.max(dineroMensualAjustadoObjetivo - pensionAplicadaObjetivo, 0);
+  const dineroNetoAnualObjetivo = dineroNetoMensualObjetivo * 12;
+  const capitalNecesarioObjetivo = dineroNetoAnualObjetivo * 25;
 
-  const capitalNecesario = dineroNetoAnual * 25;
-  const falta = Math.max(capitalNecesario - capitalActual, 0);
-
-  const resultadoTexto = document.getElementById('resultadoTexto');
-  const subResultado = document.getElementById('subResultado');
-  const accionesLista = document.getElementById('accionesLista');
-  accionesLista.innerHTML = '';
+  const faltaObjetivo = Math.max(capitalNecesarioObjetivo - capitalActual, 0);
 
   resultadoTexto.textContent =
-    `Para jubilarte a los ${edadObjetivo}, necesitarás aproximadamente ${Math.round(capitalNecesario)} €.`;
+    `Para jubilarte a los ${edadObjetivo}, necesitarás aproximadamente ${Math.round(capitalNecesarioObjetivo)} €.`;
 
   subResultado.textContent =
-    `Actualmente tienes ${Math.round(capitalActual)} €. Te faltan ${Math.round(falta)} € para recibir ${dineroMensual} €/mes (ajustado a inflación).`;
+    `Actualmente tienes ${Math.round(capitalActual)} €. Te faltan unos ${Math.round(faltaObjetivo)} € para recibir ${dineroMensual} €/mes (ajustado a inflación), teniendo en cuenta que la pensión pública a partir de los 67 años reduce lo que necesitas ahorrar tú.`;
 
-  const ahorroMensualNecesario = falta / (años * 12);
+  // Escenarios de ahorro
+  const ahorroMensualBase = ahorroMensual;
+  const ahorroMensual10 = ahorroMensual * 1.1;
+  const ahorroMensual20 = ahorroMensual * 1.2;
 
-  const li1 = document.createElement('li');
-  li1.textContent =
-    `Si ahorras ${Math.round(ahorroMensualNecesario)} € al mes, llegarás a tiempo.`;
-
-  const li2 = document.createElement('li');
-  li2.textContent =
-    `Si ahorras un 10% más (${Math.round(ahorroMensual * 1.1)} €), llegarás antes.`;
-
-  const li3 = document.createElement('li');
-  li3.textContent =
-    `Si ahorras un 20% más (${Math.round(ahorroMensual * 1.2)} €), adelantas varios años tu libertad.`;
-
-  accionesLista.appendChild(li1);
-  accionesLista.appendChild(li2);
-  accionesLista.appendChild(li3);
-
-  dibujarGrafica(
-    edadActual,
-    edadObjetivo,
-    capitalActual,
-    capitalNecesario,
-    ahorroMensual,
-    rentabilidad,
-    años
-  );
-}
-
-function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesario, ahorroMensual, rentabilidad, años) {
   const edades = [];
   const capitalBase = [];
   const capital10 = [];
@@ -80,28 +58,97 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
   let cap10 = capitalActual;
   let cap20 = capitalActual;
 
-  const ahorroAnual = ahorroMensual * 12;
-  const ahorroAnual10 = ahorroMensual * 1.1 * 12;
-  const ahorroAnual20 = ahorroMensual * 1.2 * 12;
+  let edadLlegadaBase = null;
+  let edadLlegada10 = null;
+  let edadLlegada20 = null;
 
   for (let edad = edadActual; edad <= edadObjetivo; edad++) {
+    const añosHasta = edad - edadActual;
+
+    // Ajustamos el ingreso deseado por inflación hasta esa edad
+    const dineroMensualAjustado = dineroMensual * Math.pow(1 + inflacion, añosHasta);
+
+    // Pensión solo a partir de los 67
+    const pensionAplicada = edad >= 67 ? pensionMensual : 0;
+
+    const dineroNetoMensual = Math.max(dineroMensualAjustado - pensionAplicada, 0);
+    const dineroNetoAnual = dineroNetoMensual * 12;
+
+    const capitalNecesarioEdad = dineroNetoAnual * 25;
+
     edades.push(edad);
+    necesarios.push(Math.round(capitalNecesarioEdad));
 
-    capitalBase.push(Math.round(capBase));
-    capital10.push(Math.round(cap10));
-    capital20.push(Math.round(cap20));
-    necesarios.push(Math.round(capitalNecesario));
-
-    capBase += ahorroAnual;
+    // Proyección capital con ahorro base
+    capBase += ahorroMensualBase * 12;
     capBase *= (1 + rentabilidad);
+    capitalBase.push(Math.round(capBase));
 
-    cap10 += ahorroAnual10;
+    // Proyección capital con ahorro +10%
+    cap10 += ahorroMensual10 * 12;
     cap10 *= (1 + rentabilidad);
+    capital10.push(Math.round(cap10));
 
-    cap20 += ahorroAnual20;
+    // Proyección capital con ahorro +20%
+    cap20 += ahorroMensual20 * 12;
     cap20 *= (1 + rentabilidad);
+    capital20.push(Math.round(cap20));
+
+    // Detectar primera edad en la que se alcanza el capital necesario
+    if (!edadLlegadaBase && capBase >= capitalNecesarioEdad) {
+      edadLlegadaBase = edad;
+    }
+    if (!edadLlegada10 && cap10 >= capitalNecesarioEdad) {
+      edadLlegada10 = edad;
+    }
+    if (!edadLlegada20 && cap20 >= capitalNecesarioEdad) {
+      edadLlegada20 = edad;
+    }
   }
 
+  // Explicaciones claras
+  accionesLista.innerHTML = '';
+
+  const li1 = document.createElement('li');
+  if (edadLlegadaBase) {
+    li1.textContent =
+      `Con tu ahorro actual (${Math.round(ahorroMensualBase)} € al mes), llegarías al capital necesario alrededor de los ${edadLlegadaBase} años.`;
+  } else {
+    li1.textContent =
+      `Con tu ahorro actual (${Math.round(ahorroMensualBase)} € al mes), no alcanzas el capital necesario antes de los ${edadObjetivo} años.`;
+  }
+
+  const li2 = document.createElement('li');
+  if (edadLlegada10) {
+    li2.textContent =
+      `Si ahorras un 10% más (${Math.round(ahorroMensual10)} € al mes), alcanzarías el objetivo aproximadamente a los ${edadLlegada10} años.`;
+  } else {
+    li2.textContent =
+      `Ni siquiera ahorrando un 10% más (${Math.round(ahorroMensual10)} € al mes) llegas al objetivo antes de los ${edadObjetivo} años.`;
+  }
+
+  const li3 = document.createElement('li');
+  if (edadLlegada20) {
+    li3.textContent =
+      `Si ahorras un 20% más (${Math.round(ahorroMensual20)} € al mes), podrías llegar alrededor de los ${edadLlegada20} años.`;
+  } else {
+    li3.textContent =
+      `Ni siquiera ahorrando un 20% más (${Math.round(ahorroMensual20)} € al mes) alcanzas el objetivo antes de los ${edadObjetivo} años.`;
+  }
+
+  const li4 = document.createElement('li');
+  li4.textContent =
+    `La diferencia viene de tres factores: lo que quieres cobrar al mes, la inflación hasta esa edad y el hecho de que a partir de los 67 la pensión pública cubre parte de ese ingreso y reduce el capital que necesitas ahorrar tú.`;
+
+  accionesLista.appendChild(li1);
+  accionesLista.appendChild(li2);
+  accionesLista.appendChild(li3);
+  accionesLista.appendChild(li4);
+
+  dibujarGrafica(edades, capitalBase, capital10, capital20, necesarios);
+}
+
+function dibujarGrafica(edades, capitalBase, capital10, capital20, necesarios) {
   const ctx = document.getElementById('grafica').getContext('2d');
   if (chart) chart.destroy();
 
@@ -111,7 +158,7 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
       labels: edades,
       datasets: [
         {
-          label: 'Capital actual proyectado',
+          label: 'Capital con ahorro actual',
           data: capitalBase,
           borderColor: '#0071e3',
           backgroundColor: 'rgba(0, 113, 227, 0.08)',
@@ -119,7 +166,7 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
           fill: true
         },
         {
-          label: 'Ahorrando +10%',
+          label: 'Capital ahorrando +10%',
           data: capital10,
           borderColor: '#34c759',
           backgroundColor: 'rgba(52, 199, 89, 0.08)',
@@ -127,7 +174,7 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
           fill: false
         },
         {
-          label: 'Ahorrando +20%',
+          label: 'Capital ahorrando +20%',
           data: capital20,
           borderColor: '#ff9500',
           backgroundColor: 'rgba(255, 149, 0, 0.08)',
@@ -135,7 +182,7 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
           fill: false
         },
         {
-          label: 'Capital necesario',
+          label: 'Capital necesario por edad',
           data: necesarios,
           borderColor: '#ff3b30',
           backgroundColor: 'rgba(255, 59, 48, 0.08)',
