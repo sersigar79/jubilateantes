@@ -113,35 +113,31 @@ function calcular() {
     const puede = ingresoMensualTotal >= gastoMensualJubilacion;
 
     if (currentLang === 'es') {
-      mensajePrincipal = `Con tus datos, podrías alcanzar la jubilación alrededor del año ${añoJubilacion}, a los ${edadJubilacionReal} años.`;
+      mensajePrincipal = `Podrías jubilarte alrededor del año ${añoJubilacion}, a los ${edadJubilacionReal} años.`;
       mensajeSecundario =
-        `En esa edad, tus ingresos estimados serían unos ` +
-        `${Math.round(ingresoMensualTotal).toLocaleString('es-ES')} € al mes ` +
-        `frente a un gasto deseado de ` +
-        `${Math.round(gastoMensualJubilacion).toLocaleString('es-ES')} € al mes.`;
+        `Ingresos estimados: ${Math.round(ingresoMensualTotal)} €/mes · ` +
+        `Gasto deseado: ${Math.round(gastoMensualJubilacion)} €/mes`;
       mensajeVeredicto = puede
-        ? `✅ Sí, con estas estimaciones podrías jubilarte a esa edad.`
-        : `❌ No, con estas estimaciones no podrías mantener tu nivel de gasto a esa edad.`;
+        ? `✅ Sí, puedes jubilarte a esa edad.`
+        : `❌ No, no puedes mantener tu nivel de gasto a esa edad.`;
     } else {
-      mensajePrincipal = `With your data, you could reach retirement around ${añoJubilacion}, at age ${edadJubilacionReal}.`;
+      mensajePrincipal = `You could retire around ${añoJubilacion}, at age ${edadJubilacionReal}.`;
       mensajeSecundario =
-        `At that age, your estimated income would be about ` +
-        `${Math.round(ingresoMensualTotal).toLocaleString('en-US')} € per month ` +
-        `against a desired spending of ` +
-        `${Math.round(gastoMensualJubilacion).toLocaleString('en-US')} € per month.`;
+        `Estimated income: ${Math.round(ingresoMensualTotal)} €/month · ` +
+        `Desired spending: ${Math.round(gastoMensualJubilacion)} €/month`;
       mensajeVeredicto = puede
-        ? `✅ Yes, with these estimates you could retire at that age.`
-        : `❌ No, with these estimates you could not maintain your spending level at that age.`;
+        ? `✅ Yes, you can retire at that age.`
+        : `❌ No, you cannot maintain your spending level at that age.`;
     }
   } else {
     if (currentLang === 'es') {
-      mensajePrincipal = `Con los datos actuales, no alcanzas un nivel de capital suficiente antes de los ${edadMax} años.`;
-      mensajeSecundario = `Prueba aumentando tu ahorro mensual, reduciendo tu gasto en jubilación o ajustando la rentabilidad esperada.`;
-      mensajeVeredicto = `❌ No, con estas estimaciones no es viable jubilarte a la edad objetivo.`;
+      mensajePrincipal = `No alcanzas suficiente capital antes de los ${edadMax} años.`;
+      mensajeSecundario = `Prueba aumentando ahorro mensual o reduciendo gasto en jubilación.`;
+      mensajeVeredicto = `❌ No es viable jubilarte a la edad objetivo.`;
     } else {
-      mensajePrincipal = `With the current data, you do not reach sufficient capital before age ${edadMax}.`;
-      mensajeSecundario = `Try increasing your monthly savings, reducing your retirement spending or adjusting expected returns.`;
-      mensajeVeredicto = `❌ No, with these estimates it is not viable to retire at the target age.`;
+      mensajePrincipal = `You do not reach sufficient capital before age ${edadMax}.`;
+      mensajeSecundario = `Try increasing monthly savings or reducing retirement spending.`;
+      mensajeVeredicto = `❌ It is not viable to retire at the target age.`;
     }
   }
 
@@ -152,31 +148,16 @@ function calcular() {
   const acciones = [];
 
   if (!edadJubilacionReal || edadJubilacionReal > edadObjetivo) {
-    if (currentLang === 'es') {
-      acciones.push(
-        `• Caso 1: Aumentar tu ahorro mensual en 200 € podría adelantar varios años tu jubilación.`,
-        `• Caso 2: Reducir tu gasto anual deseado en jubilación un 10% baja el capital necesario.`,
-        `• Caso 3: Mejorar tu rentabilidad esperada del ${Math.round(rentabilidad * 100)}% al ${Math.round((rentabilidad + 0.02) * 100)}% tiene un impacto enorme a largo plazo.`
-      );
-    } else {
-      acciones.push(
-        `• Case 1: Increasing your monthly savings by 200 € could bring your retirement forward several years.`,
-        `• Case 2: Reducing your desired annual spending in retirement by 10% lowers the required capital.`,
-        `• Case 3: Improving your expected return from ${Math.round(rentabilidad * 100)}% to ${Math.round((rentabilidad + 0.02) * 100)}% has a huge long‑term impact.`
-      );
-    }
+    acciones.push(
+      `• Aumentar ahorro mensual en 200 € adelanta varios años la jubilación.`,
+      `• Reducir gasto anual en jubilación un 10% baja el capital necesario.`,
+      `• Subir rentabilidad del ${Math.round(rentabilidad * 100)}% al ${Math.round((rentabilidad + 0.02) * 100)}% tiene gran impacto.`
+    );
   } else {
-    if (currentLang === 'es') {
-      acciones.push(
-        `• Ejemplo: Mantener tu ahorro mensual y evitar subidas fuertes de gasto te ayuda a consolidar esa jubilación anticipada.`,
-        `• Ejemplo: Añadir nuevas fuentes de ingresos pasivos reduce tu dependencia de la pensión pública.`
-      );
-    } else {
-      acciones.push(
-        `• Example: Maintaining your monthly savings and avoiding strong spending increases helps consolidate early retirement.`,
-        `• Example: Adding new sources of passive income reduces your dependence on public pension.`
-      );
-    }
+    acciones.push(
+      `• Mantener ahorro mensual consolida la jubilación anticipada.`,
+      `• Añadir ingresos pasivos reduce dependencia de la pensión.`
+    );
   }
 
   acciones.forEach(texto => {
@@ -225,15 +206,10 @@ function estimarPension(pais, ingresos, aniosTotales) {
   else if (aniosTotales >= 25) factorBase = 0.6;
 
   switch (pais) {
-    case 'es':
-      return ingresos * factorBase * 0.6;
-    case 'uk':
-      return ingresos * factorBase * 0.5;
-    case 'us':
-      return ingresos * factorBase * 0.4;
-    case 'de':
-      return ingresos * factorBase * 0.55;
-    default:
-      return ingresos * factorBase * 0.5;
+    case 'es': return ingresos * factorBase * 0.6;
+    case 'uk': return ingresos * factorBase * 0.5;
+    case 'us': return ingresos * factorBase * 0.4;
+    case 'de': return ingresos * factorBase * 0.55;
+    default: return ingresos * factorBase * 0.5;
   }
 }
