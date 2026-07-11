@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jubílate Antes – Estilo Apple</title>
+  <title>Jubílate Antes – Calculadora de Libertad</title>
   <link href="styles.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,56 +13,82 @@
 
 <header class="header">
   <div class="logo">Jubílate Antes</div>
+  <button class="header-cta" onclick="scrollToLead()">Quiero un plan</button>
 </header>
 
 <section class="hero">
   <div class="hero-content">
-    <h1>Tu libertad tiene fecha.</h1>
-    <p>Descubre cuánto dinero necesitas para jubilarte a la edad que deseas.</p>
-    <button onclick="scrollToForm()" class="btn-primary">Calcular mi libertad</button>
+    <h1>Tu libertad tiene fecha. Descubre cuál.</h1>
+    <p>
+      Calcula cuánto dinero necesitas para dejar atrás reuniones absurdas, jefes que gritan
+      y vivir de tu propio capital.
+    </p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="scrollToForm()">Calcular mi libertad</button>
+      <button class="btn-secondary" onclick="scrollToLead()">Recibir plan personalizado</button>
+    </div>
+    <p class="hero-sub">
+      Sin tecnicismos. En menos de 1 minuto sabes si vas en camino o no.
+    </p>
   </div>
 
-  <img class="hero-img" 
+  <img class="hero-img"
        src="https://images.unsplash.com/photo-1521737604893-0f3c6a4ca0f3"
        alt="Empleado cansado en reunión con jefe enfadado">
 </section>
 
 <section id="form" class="form-section">
-  <h2>Tu situación actual</h2>
+  <h2>Calculadora de libertad</h2>
+  <p class="section-sub">
+    Rellena solo tres datos. Te decimos cuánto necesitas y qué puedes hacer para llegar.
+  </p>
 
   <div class="form-grid">
-
     <label>Edad actual
       <input type="number" id="edadActual" value="40">
     </label>
 
-    <label>Edad objetivo de jubilación
+    <label>Edad a la que quieres jubilarte
       <input type="number" id="edadObjetivo" value="60">
     </label>
 
-    <label>Dinero ahorrado (€)
+    <label>Dinero que ya tienes ahorrado (€)
       <input type="number" id="capitalActual" value="50000">
     </label>
-
   </div>
 
   <button class="btn-primary" onclick="calcular()">Calcular</button>
 </section>
 
 <section id="resultados" class="result-section">
-  <h2>Resultado</h2>
+  <h2>Tu resultado</h2>
 
-  <p id="resultadoTexto"></p>
-  <p id="subResultado"></p>
+  <p id="resultadoTexto" class="resultado-principal"></p>
+  <p id="subResultado" class="resultado-secundario"></p>
 
   <canvas id="grafica"></canvas>
 
-  <h3>Cómo puedes llegar antes</h3>
-  <ul id="accionesLista"></ul>
+  <h3>Cómo acercarte antes a tu libertad</h3>
+  <ul id="accionesLista" class="acciones-lista"></ul>
+</section>
+
+<section id="lead" class="lead-section">
+  <h2>¿Quieres un plan concreto para dejar tu trabajo antes?</h2>
+  <p class="section-sub">
+    Te envío un resumen con:
+    cuánto necesitas, cuánto te falta y tres movimientos claros para acercarte a tu libertad.
+  </p>
+
+  <div class="lead-grid">
+    <input type="email" id="email" placeholder="Tu email">
+    <button class="btn-primary" onclick="enviarLead()">Recibir mi plan</button>
+  </div>
+
+  <p id="leadMensaje" class="lead-mensaje"></p>
 </section>
 
 <footer class="footer">
-  <p>Jubílate Antes © 2026</p>
+  <p>Jubílate Antes © 2026 · Esta herramienta es orientativa, no asesoramiento financiero.</p>
 </footer>
 
 <script src="main.js"></script>
