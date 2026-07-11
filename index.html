@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jubílate Antes – Calculadora de Libertad</title>
+  <title>Jubílate Antes – Calculadora Real</title>
   <link href="styles.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,14 +18,14 @@
 <section class="hero">
   <div class="hero-content">
     <h1>Tu libertad tiene fecha.</h1>
-    <p>Descubre cuánto dinero necesitas para jubilarte a la edad que deseas.</p>
+    <p>Descubre cuánto dinero necesitas para jubilarte a la edad que deseas y cómo llegar antes.</p>
     <button class="btn-primary" onclick="scrollToForm()">Calcular mi libertad</button>
   </div>
 </section>
 
 <section id="form" class="form-section">
   <h2>Calculadora de libertad</h2>
-  <p class="section-sub">Rellena estos datos y te explicamos por qué falta dinero y cómo llegar antes.</p>
+  <p class="section-sub">Rellena estos datos y te explicamos por qué falta dinero y cómo mejorar.</p>
 
   <div class="form-grid">
 
@@ -41,11 +41,15 @@
       <input type="number" id="capitalActual" value="50000">
     </label>
 
-    <label>Dinero mensual que quieres recibir (€)
+    <label>Ahorro mensual actual (€)
+      <input type="number" id="ahorroMensual" value="300">
+    </label>
+
+    <label>Dinero mensual deseado en jubilación (€)
       <input type="number" id="dineroMensual" value="2000">
     </label>
 
-    <label>Pensión pública estimada (€ / mes)
+    <label>Pensión mensual estimada (€)
       <input type="number" id="pensionMensual" value="0">
     </label>
 
@@ -62,7 +66,7 @@
 
   <canvas id="grafica"></canvas>
 
-  <h3>Cómo acercarte antes a tu libertad</h3>
+  <h3>Cómo llegar antes</h3>
   <ul id="accionesLista" class="acciones-lista"></ul>
 </section>
 
