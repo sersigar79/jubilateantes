@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculadora de Jubilación Anticipada</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1>Calculadora de Jubilación Anticipada</h1>
+    <p>Descubre cuándo podrías jubilarte y cuánto necesitas ahorrar o ganar.</p>
+  </header>
+
+  <section class="form-section">
+    <h2>Tus datos</h2>
+
+    <label>Edad actual:
+      <input type="number" id="edadActual" value="40">
+    </label>
+
+    <label>Edad objetivo de jubilación:
+      <input type="number" id="edadObjetivo" value="55">
+    </label>
+
+    <label>Gasto anual deseado (euros de hoy):
+      <input type="number" id="gastoAnual" value="30000">
+    </label>
+
+    <label>Inflación esperada (%):
+      <input type="number" id="inflacion" value="2.5" step="0.1">
+    </label>
+
+    <label>Rentabilidad esperada (%):
+      <input type="number" id="rentabilidad" value="6" step="0.1">
+    </label>
+
+    <label>Capital actual total (€):
+      <input type="number" id="capitalActual" value="50000">
+    </label>
+
+    <label>Ahorro anual futuro (€):
+      <input type="number" id="aportacionAnual" value="12000">
+    </label>
+
+    <label>Premio de lotería / herencia (€):
+      <input type="number" id="loteria" value="0">
+    </label>
+
+    <label>Ingresos pasivos anuales (alquileres, etc.) (€):
+      <input type="number" id="ingresosPasivos" value="0">
+    </label>
+
+    <label>Pensión pública estimada (€ / año):
+      <input type="number" id="pensionPublica" value="0">
+    </label>
+
+    <button onclick="calcular()">Calcular</button>
+  </section>
+
+  <section class="result-section">
+    <h2>Resultado</h2>
+    <p id="resultadoTexto"></p>
+    <canvas id="grafica"></canvas>
+  </section>
+
+  <footer>
+    <p>Herramienta orientativa. No es asesoramiento financiero.</p>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
