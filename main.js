@@ -4,61 +4,55 @@ function scrollToForm() {
   document.getElementById('form').scrollIntoView({ behavior: 'smooth' });
 }
 
-function scrollToLead() {
-  document.getElementById('lead').scrollIntoView({ behavior: 'smooth' });
-}
-
 function calcular() {
   const edadActual = Number(document.getElementById('edadActual').value);
   const edadObjetivo = Number(document.getElementById('edadObjetivo').value);
   const capitalActual = Number(document.getElementById('capitalActual').value);
+  const dineroMensual = Number(document.getElementById('dineroMensual').value);
+  const pensionMensual = Number(document.getElementById('pensionMensual').value);
 
   const años = edadObjetivo - edadActual;
-  if (años <= 0 || !edadActual || !edadObjetivo) {
+  if (años <= 0) {
     document.getElementById('resultadoTexto').textContent =
-      'Introduce una edad actual y una edad de jubilación coherentes.';
-    document.getElementById('subResultado').textContent = '';
+      'La edad de jubilación debe ser mayor que la edad actual.';
     return;
   }
 
-  const gastoAnualDeseado = 24000; // objetivo de vida decente
   const inflacion = 0.025;
   const rentabilidad = 0.06;
 
-  const gastoAjustado = gastoAnualDeseado * Math.pow(1 + inflacion, años);
-  const capitalNecesario = gastoAjustado * 25;
+  const dineroMensualAjustado = dineroMensual * Math.pow(1 + inflacion, años);
+  const dineroNetoMensual = Math.max(dineroMensualAjustado - pensionMensual, 0);
+  const dineroNetoAnual = dineroNetoMensual * 12;
+
+  const capitalNecesario = dineroNetoAnual * 25;
+
+  const falta = Math.max(capitalNecesario - capitalActual, 0);
 
   const resultadoTexto = document.getElementById('resultadoTexto');
   const subResultado = document.getElementById('subResultado');
   const accionesLista = document.getElementById('accionesLista');
   accionesLista.innerHTML = '';
 
-  const falta = Math.max(capitalNecesario - capitalActual, 0);
-
   resultadoTexto.textContent =
     `Para jubilarte a los ${edadObjetivo}, necesitarás aproximadamente ${Math.round(capitalNecesario)} €.`;
 
-  if (falta === 0) {
-    subResultado.textContent =
-      `Ya tienes el capital objetivo (${Math.round(capitalActual)} €). Podrías estar mucho más cerca de dejar tu trabajo.`;
-  } else {
-    subResultado.textContent =
-      `Actualmente tienes ${Math.round(capitalActual)} €. Te faltan unos ${Math.round(falta)} € para ese objetivo.`;
-  }
+  subResultado.textContent =
+    `Actualmente tienes ${Math.round(capitalActual)} €. Te faltan ${Math.round(falta)} € para recibir ${dineroMensual} €/mes (ajustado a inflación).`;
 
   const ahorroMensualNecesario = falta / (años * 12);
 
   const li1 = document.createElement('li');
   li1.textContent =
-    `Si ahorras unos ${Math.round(ahorroMensualNecesario)} € al mes, llegarías a tu objetivo a los ${edadObjetivo}.`;
+    `Ahorrar unos ${Math.round(ahorroMensualNecesario)} € al mes te permite llegar a tiempo.`;
 
   const li2 = document.createElement('li');
   li2.textContent =
-    `Reducir tu gasto mensual en esa cantidad te acerca igual de rápido, sin necesidad de ganar más.`;
+    `Reducir tu gasto mensual en esa cantidad también te acerca sin necesidad de ganar más.`;
 
   const li3 = document.createElement('li');
   li3.textContent =
-    `Si aumentas tus ingresos en ${Math.round(ahorroMensualNecesario)} € al mes (side projects, ventas, consultoría), puedes acelerar aún más tu libertad.`;
+    `Si aumentas tus ingresos en ${Math.round(ahorroMensualNecesario)} € al mes (side projects, ventas, consultoría), aceleras tu libertad.`;
 
   accionesLista.appendChild(li1);
   accionesLista.appendChild(li2);
@@ -81,8 +75,7 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
     capitales.push(Math.round(capital));
 
     const añosHasta = edad - edadActual;
-    const gastoAjustado = 24000 * Math.pow(1 + 0.025, añosHasta);
-    const necesario = gastoAjustado * 25;
+    const necesario = capitalNecesario;
     necesarios.push(Math.round(necesario));
 
     capital += ahorroAnual;
@@ -131,18 +124,4 @@ function dibujarGrafica(edadActual, edadObjetivo, capitalActual, capitalNecesari
       }
     }
   });
-}
-
-function enviarLead() {
-  const email = document.getElementById('email').value;
-  const leadMensaje = document.getElementById('leadMensaje');
-
-  if (!email || !email.includes('@')) {
-    leadMensaje.textContent = 'Introduce un email válido.';
-    return;
-  }
-
-  // Aquí iría la integración real (Zapier, API, etc.)
-  leadMensaje.textContent =
-    'Perfecto. Imagina aquí que recibes un plan en tu correo. En producción, este botón capturaría leads reales.';
 }
