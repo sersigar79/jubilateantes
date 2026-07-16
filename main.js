@@ -1,10 +1,12 @@
+/* ===================== Constantes oficiales 2026 (España) ===================== */
 const PENSION_MAX_MENSUAL = 3359.60;
 const BASE_MAX_MENSUAL = 5101.20;
 const PENSION_MIN_ANUAL_SIN_CONYUGE = 12441.80;
 const UMBRAL_ANOS_EDAD_ORDINARIA = 38 + 3/12;
 const EDAD_ORDINARIA_CORTA = 65;
 const EDAD_ORDINARIA_LARGA = 66 + 10/12;
-const MIN_ANOS_JUB_ANTICIPADA = 35;
+const MIN_ANOS_PENSION = 15;          // mínimo para tener derecho a CUALQUIER pensión contributiva
+const MIN_ANOS_JUB_ANTICIPADA = 35;   // mínimo adicional para jubilación anticipada VOLUNTARIA
 const MAX_MESES_ANTICIPO = 24;
 
 const COEF_TABLE = {
@@ -19,564 +21,477 @@ const COEF_TABLE = {
 };
 function tramoIndex(a){ if(a<38+6/12)return 0; if(a<41+6/12)return 1; if(a<44+6/12)return 2; return 3; }
 function edadOrdinaria(a){ return a>=UMBRAL_ANOS_EDAD_ORDINARIA?EDAD_ORDINARIA_CORTA:EDAD_ORDINARIA_LARGA; }
-function pctBaseReguladora(a){
-  const m=a*12; if(m<=0)return 0; if(m<=180)return (m/180)*50;
-  const e1=Math.min(m-180,49); let pct=50+e1*0.21;
-  const e2=Math.max(0,m-180-49); pct+=e2*0.19; return Math.min(100,pct);
+function edadOrdinariaProyectada(aniosCotizadosActuales, edadActual){
+  const a65 = aniosCotizadosActuales + (65-edadActual);
+  return a65 >= UMBRAL_ANOS_EDAD_ORDINARIA ? EDAD_ORDINARIA_CORTA : EDAD_ORDINARIA_LARGA;
 }
-function coeficienteReductor(mesesAdelanto,anios){
-  const m=Math.max(0,Math.min(MAX_MESES_ANTICIPO,Math.round(mesesAdelanto)));
-  if(m===0)return 0; return COEF_TABLE[m][tramoIndex(anios)]/100;
+function pctBaseReguladora(aniosCotizados){
+  const meses = aniosCotizados*12;
+  if(meses < MIN_ANOS_PENSION*12) return 0; // menos de 15 años: SIN derecho a pensión
+  const extra1 = Math.min(meses-180, 49);
+  let pct = 50 + extra1*0.21;
+  const extra2 = Math.max(0, meses-180-49);
+  pct += extra2*0.19;
+  return Math.min(100, pct);
 }
-function calcularPension({edadJubilacion,aniosCotizados,salarioBrutoAnual}){
-  const baseMensual=Math.min(salarioBrutoAnual/12,BASE_MAX_MENSUAL);
-  const pct=pctBaseReguladora(aniosCotizados);
-  const eOrd=edadOrdinaria(aniosCotizados);
-  const mesesAdelanto=Math.max(0,Math.round((eOrd-edadJubilacion)*12));
-  const cumple=aniosCotizados>=MIN_ANOS_JUB_ANTICIPADA && mesesAdelanto<=MAX_MESES_ANTICIPO;
-  const coef=edadJubilacion<eOrd?coeficienteReductor(mesesAdelanto,aniosCotizados):0;
-  let pensionMensual=baseMensual*(pct/100)*(1-coef);
-  pensionMensual=Math.min(pensionMensual,PENSION_MAX_MENSUAL);
-  return {baseMensual,pct,eOrd,mesesAdelanto,cumple,coef,pensionMensual,pensionAnual:pensionMensual*14,
-    bajoMinimo: aniosCotizados>=15 && pensionMensual*14<PENSION_MIN_ANUAL_SIN_CONYUGE};
+function coeficienteReductor(mesesAdelanto, aniosCotizados){
+  const m = Math.max(0, Math.min(MAX_MESES_ANTICIPO, Math.round(mesesAdelanto)));
+  if(m===0) return 0;
+  return COEF_TABLE[m][tramoIndex(aniosCotizados)]/100;
 }
-const fmtEUR=n=>new Intl.NumberFormat('es-ES',{maximumFractionDigits:0}).format(Math.round(n))+' €';
-const fmt1=n=>new Intl.NumberFormat('es-ES',{maximumFractionDigits:1}).format(n);
+function calcularPension({edadJubilacion, aniosCotizados, salarioBrutoAnual}){
+  const baseMensual = Math.min(salarioBrutoAnual/12, BASE_MAX_MENSUAL);
+  const eOrd = edadOrdinaria(aniosCotizados);
+  const tieneMinimo = aniosCotizados >= MIN_ANOS_PENSION;
+  const esAnticipada = edadJubilacion < eOrd - 0.01;
+  const mesesAdelanto = esAnticipada ? Math.max(0, Math.round((eOrd-edadJubilacion)*12)) : 0;
+  const cumpleAnticipada = !esAnticipada || (aniosCotizados >= MIN_ANOS_JUB_ANTICIPADA && mesesAdelanto <= MAX_MESES_ANTICIPO);
+  const cumple = tieneMinimo && cumpleAnticipada;
+  const pct = tieneMinimo ? pctBaseReguladora(aniosCotizados) : 0;
+  const coef = (esAnticipada && cumpleAnticipada) ? coeficienteReductor(mesesAdelanto, aniosCotizados) : 0;
+  const pensionMensual = cumple ? Math.min(baseMensual*(pct/100)*(1-coef), PENSION_MAX_MENSUAL) : 0;
+  return {
+    baseMensual, pct, eOrd, mesesAdelanto, esAnticipada, tieneMinimo, cumpleAnticipada, cumple, coef,
+    pensionMensual, pensionAnual: pensionMensual*14,
+    bajoMinimo: cumple && pensionMensual*14 < PENSION_MIN_ANUAL_SIN_CONYUGE,
+  };
+}
+function fvAnnuityFactor(n,r){ if(n<=0) return 0; return r===0? n : (Math.pow(1+r,n)-1)/r; }
 
+const fmtEUR = n => new Intl.NumberFormat('es-ES',{maximumFractionDigits:0}).format(Math.round(n))+' €';
+const fmt1 = n => new Intl.NumberFormat('es-ES',{maximumFractionDigits:1}).format(n);
+
+/* ===================== Estado ===================== */
 const S = {
-  edadActual:46, edadObjetivo:55, gastoMensual:3333,
-  ahorroLiquido:90000, accionesEEUU:28000, accionesGSK:18000, planPensiones:25000,
-  aportacionAnual:20000, accionesGSKAnual:6000, aportacionPlan:1500,
-  rentCartera:6, rentGSK:4, inflacion:2.5,
-  valorInmuebles:0, alquilerMensualNeto:0, revalorizacionInmuebles:2,
-  valorOro:0, revalorizacionOro:2, incluirOtrosEnComparativa:false,
-  aniosCotizados:22, salarioBrutoAnual:55000, sigueCotizando:true, pagaConvenio:false, baseConvenio:1500,
-  incluirIngresosPasivos:true,
-  modoObjetivo:'perpetuo', edadFinDinero:90,
-
-  loteriaEdadActual:46, loteriaCapital:500000, loteriaGastoMensual:2500,
-  loteriaRentabilidad:4, loteriaInflacion:2.5, loteriaEdadMax:100,
+  edadActual:45, edadObjetivo:60,
+  patrimonioActual:60000, aportacionMensual:600,
+  gastoMensual:1800,
+  aniosCotizados:20, salarioBrutoMensual:2400,
+  contarPension:true,
+  rentabilidad:6, inflacion:2.5, edadFinDinero:90, ingresoPasivoMensual:0,
+  pagaConvenio:false, baseConvenio:1200,
+  loteriaEdadActual:45, loteriaCapital:300000, loteriaGastoMensual:1500,
+  loteriaRentabilidad:4, loteriaInflacion:2.5, loteriaEdadMax:95,
 };
 
-let currentTab='patrimonio';
-let charts={};
+/* ===================== Motor de cálculo ===================== */
+function computeAll(){
+  const aniosHasta = Math.max(0, S.edadObjetivo - S.edadActual);
+  const aniosCotizadosFinal = S.aniosCotizados + aniosHasta;
+  const pension = calcularPension({edadJubilacion:S.edadObjetivo, aniosCotizados:aniosCotizadosFinal, salarioBrutoAnual:S.salarioBrutoMensual*12});
+  const edadPension = pension.cumple ? S.edadObjetivo : pension.eOrd;
+  const ingresoPasivoAnual = S.ingresoPasivoMensual*12;
 
-function field(key,label,suffix,step,hint){
-  return `<div class="field"><label>${label}</label><div class="row">
-    <input type="number" data-field="${key}" step="${step||1}" value="${S[key]}" oninput="update('${key}',this.value)" onblur="flushUpdate()">
-    ${suffix?`<span class="suffix">${suffix}</span>`:''}
-  </div>${hint?`<div class="hint">${hint}</div>`:''}</div>`;
+  function gastoInfladoEn(edad){ return S.gastoMensual*12*Math.pow(1+S.inflacion/100, edad-S.edadActual); }
+  function ingresosEn(edad){
+    let ing = edad>=S.edadObjetivo ? ingresoPasivoAnual : 0;
+    if(S.contarPension && edad>=edadPension) ing += pension.pensionAnual;
+    return ing;
+  }
+  function gapEn(edad){ return Math.max(0, gastoInfladoEn(edad)-ingresosEn(edad)); }
+
+  function objetivoPerpetuo(edadInicio){
+    const finBridge = (S.contarPension||S.ingresoPasivoMensual>0) ? Math.max(edadInicio, edadPension) : edadInicio;
+    const nBridge = Math.max(0, Math.round(finBridge-edadInicio));
+    let cap=0;
+    for(let n=0;n<nBridge;n++) cap += gapEn(edadInicio+n)/Math.pow(1+S.rentabilidad/100, n);
+    const tailGap = gapEn(finBridge);
+    cap += (25*tailGap)/Math.pow(1+S.rentabilidad/100, nBridge);
+    return cap;
+  }
+  function objetivoConsumible(edadInicio){
+    const nMax = Math.max(0, Math.round(S.edadFinDinero-edadInicio));
+    let cap=0;
+    for(let n=0;n<nMax;n++) cap += gapEn(edadInicio+n)/Math.pow(1+S.rentabilidad/100, n);
+    return cap;
+  }
+
+  const rows=[];
+  let patrimonio = S.patrimonioActual;
+  const horizonte = Math.max(S.edadFinDinero, S.edadObjetivo+30) - S.edadActual;
+  for(let i=0;i<=horizonte;i++){
+    const edad = S.edadActual+i;
+    if(i>0) patrimonio = patrimonio*(1+S.rentabilidad/100) + S.aportacionMensual*12;
+    rows.push({ edad, patrimonio, objetivoPerpetuo: objetivoPerpetuo(edad), objetivoConsumible: objetivoConsumible(edad) });
+  }
+  const filaObjetivo = rows.find(r=>r.edad===S.edadObjetivo) || rows[0];
+
+  const escA = calcularPension({edadJubilacion:S.edadObjetivo, aniosCotizados:S.aniosCotizados, salarioBrutoAnual:S.salarioBrutoMensual*12});
+  const escB = pension;
+  const eOrdProy = edadOrdinariaProyectada(S.aniosCotizados, S.edadActual);
+  const aniosSiEspera = S.aniosCotizados + (eOrdProy - S.edadActual);
+  const escC = calcularPension({edadJubilacion:eOrdProy, aniosCotizados:aniosSiEspera, salarioBrutoAnual:S.salarioBrutoMensual*12});
+  const costeConvenioAnual = S.baseConvenio*12*0.295;
+
+  return {aniosHasta, aniosCotizadosFinal, pension, edadPension, ingresoPasivoAnual, rows, filaObjetivo,
+    escA, escB, escC, eOrdProy, aniosSiEspera, costeConvenioAnual};
 }
-function toggle(key,label,hint){
-  return `<div class="toggle-row"><div><p>${label}</p>${hint?`<p class="hint">${hint}</p>`:''}</div>
-    <button class="switch ${S[key]?'on':''}" onclick="updateToggle('${key}')"><span></span></button></div>`;
-}
-let renderTimer=null;
-window.update=function(key,val){
-  const parsed = val==='' ? 0 : parseFloat(val);
-  S[key] = isNaN(parsed) ? S[key] : parsed;
-  if(renderTimer) clearTimeout(renderTimer);
-  renderTimer = setTimeout(()=>{ renderTimer=null; render(); }, 600);
-}
-window.flushUpdate=function(){
-  if(renderTimer){ clearTimeout(renderTimer); renderTimer=null; }
-  render();
-}
-window.updateToggle=function(key){ S[key]=!S[key]; render(); }
-window.setModo=function(m){ S.modoObjetivo=m; render(); }
-window.toggleLegal=function(){
-  const el=document.getElementById('legal-full');
-  el.style.display = el.style.display==='block' ? 'none' : 'block';
+
+function calcularPalancas(D){
+  const objetivo = D.filaObjetivo.objetivoPerpetuo;
+  const patrimonio = D.filaObjetivo.patrimonio;
+  const shortfall = Math.max(0, objetivo-patrimonio);
+  if(shortfall<=0){
+    let edadPosible = S.edadObjetivo;
+    for(const row of D.rows){ if(row.patrimonio>=row.objetivoPerpetuo){ edadPosible=row.edad; break; } }
+    return {yaLoAlcanzas:true, edadPosible};
+  }
+  const n = Math.max(1, Math.round(S.edadObjetivo-S.edadActual));
+  const r = S.rentabilidad/100;
+  const extraMensual = (shortfall/fvAnnuityFactor(n,r))/12;
+
+  function diffConRent(rNuevo){ const back=S.rentabilidad; S.rentabilidad=rNuevo; const DD=computeAll(); S.rentabilidad=back; return DD.filaObjetivo.patrimonio-DD.filaObjetivo.objetivoPerpetuo; }
+  let rentNecesaria=null;
+  if(diffConRent(40)>=0){ let lo=S.rentabilidad,hi=40; for(let i=0;i<40;i++){ const mid=(lo+hi)/2; if(diffConRent(mid)>=0) hi=mid; else lo=mid; } rentNecesaria=hi; }
+
+  function diffConGasto(gNuevo){ const back=S.gastoMensual; S.gastoMensual=gNuevo; const DD=computeAll(); S.gastoMensual=back; return DD.filaObjetivo.patrimonio-DD.filaObjetivo.objetivoPerpetuo; }
+  let gastoNecesario=null;
+  if(diffConGasto(0)>=0){ let lo=0,hi=S.gastoMensual; for(let i=0;i<40;i++){ const mid=(lo+hi)/2; if(diffConGasto(mid)>=0) lo=mid; else hi=mid; } gastoNecesario=lo; }
+
+  let edadNecesaria=null;
+  for(const row of D.rows){ if(row.edad<S.edadObjetivo) continue; if(row.patrimonio>=row.objetivoPerpetuo){ edadNecesaria=row.edad; break; } }
+
+  return {yaLoAlcanzas:false, shortfall, extraMensual, rentNecesaria, gastoNecesario, edadNecesaria};
 }
 
 function simularDuracion(capitalInicial, gastoMensual, rentabilidad, inflacion, edadInicio, edadMax){
   let capital = capitalInicial;
-  const serie = [{edad:edadInicio, capital}];
+  const serie=[{edad:edadInicio, capital}];
   for(let edad=edadInicio+1; edad<=edadMax; edad++){
     const gastoAnual = gastoMensual*12*Math.pow(1+inflacion/100, edad-edadInicio);
     capital = capital*(1+rentabilidad/100) - gastoAnual;
-    serie.push({edad, capital: Math.max(0,capital)});
-    if(capital<=0){ return {seAgota:true, edadAgota:edad, serie}; }
+    serie.push({edad, capital:Math.max(0,capital)});
+    if(capital<=0) return {seAgota:true, edadAgota:edad, serie};
   }
   return {seAgota:false, edadAgota:null, serie};
 }
-
 function computeLoteria(){
   const res = simularDuracion(S.loteriaCapital, S.loteriaGastoMensual, S.loteriaRentabilidad, S.loteriaInflacion, S.loteriaEdadActual, S.loteriaEdadMax);
-  // Capital que haría falta para que dure exactamente hasta loteriaEdadMax (o para siempre si rentabilidad>0 y gasto<=capital*rentabilidad)
   const gastoAnualHoy = S.loteriaGastoMensual*12;
   const capitalParaSiempre = S.loteriaRentabilidad>0 ? gastoAnualHoy/(S.loteriaRentabilidad/100) : Infinity;
   return {...res, capitalParaSiempre};
 }
 
-function edadOrdinariaProyectada(aniosCotizadosActuales, edadActual){
-  const a65 = aniosCotizadosActuales + (65 - edadActual);
-  return a65 >= UMBRAL_ANOS_EDAD_ORDINARIA ? EDAD_ORDINARIA_CORTA : EDAD_ORDINARIA_LARGA;
+/* ===================== UI helpers ===================== */
+function field(key,label,suffix,step,hint){
+  return `<div class="field"><label>${label}</label><div class="row">
+    <input type="number" inputmode="decimal" data-field="${key}" step="${step||1}" value="${S[key]}" oninput="onNum('${key}',this.value)">
+    ${suffix?`<span class="suffix">${suffix}</span>`:''}
+  </div>${hint?`<div class="hint">${hint}</div>`:''}</div>`;
+}
+function toggle(key,label,hint){
+  return `<div class="toggle-row"><div><p>${label}</p>${hint?`<p class="hint">${hint}</p>`:''}</div>
+    <button class="switch ${S[key]?'on':''}" onclick="onToggle('${key}')"><span></span></button></div>`;
+}
+function out(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+function outClass(id,cls){ const el=document.getElementById(id); if(el) el.className=cls; }
+function outShow(id,show){ const el=document.getElementById(id); if(el) el.style.display = show?'':'none'; }
+
+window.onNum=function(key,val){
+  const parsed = val===''?0:parseFloat(val);
+  S[key] = isNaN(parsed) ? S[key] : parsed;
+  refreshCurrentTab();
+}
+window.onToggle=function(key){ S[key]=!S[key]; showTab(currentTab); }
+window.toggleAdvanced=function(){
+  const box=document.getElementById('advanced-box');
+  const btn=document.getElementById('advanced-btn');
+  const open = box.style.display==='block';
+  box.style.display = open ? 'none' : 'block';
+  btn.textContent = open ? '+ Ajustes avanzados (rentabilidad, inflación, otros ingresos...)' : '– Ocultar ajustes avanzados';
+}
+window.toggleLegal=function(){
+  const el=document.getElementById('legal-full');
+  el.style.display = el.style.display==='block' ? 'none' : 'block';
 }
 
-function computeAll(){
-  const aniosHasta=Math.max(0,S.edadObjetivo-S.edadActual);
-  const escA=calcularPension({edadJubilacion:S.edadObjetivo,aniosCotizados:S.aniosCotizados,salarioBrutoAnual:S.salarioBrutoAnual});
-  const aniosSiSigue=S.aniosCotizados+aniosHasta;
-  const escB=calcularPension({edadJubilacion:S.edadObjetivo,aniosCotizados:aniosSiSigue,salarioBrutoAnual:S.salarioBrutoAnual});
-  const eOrdProyectada = edadOrdinariaProyectada(S.aniosCotizados, S.edadActual);
-  const aniosSiEsperaOrdinaria = S.aniosCotizados + (eOrdProyectada - S.edadActual);
-  const escC = calcularPension({edadJubilacion:eOrdProyectada, aniosCotizados:aniosSiEsperaOrdinaria, salarioBrutoAnual:S.salarioBrutoAnual});
-  const costeConvenioAnual=S.baseConvenio*12*0.295;
-  const usaB = S.sigueCotizando || S.pagaConvenio;
-  const escU = usaB?escB:escA;
-  const edadPension = escU.cumple ? S.edadObjetivo : escU.eOrd;
-  const alquilerAnual = S.alquilerMensualNeto*12;
+let currentTab='principal';
+let charts={};
 
-  function gastoInfladoEn(edad){ return S.gastoMensual*12*Math.pow(1+S.inflacion/100, edad-S.edadActual); }
-  function ingresosEn(edad, incluir){
-    if(!incluir) return 0;
-    let ing=0;
-    if(edad>=S.edadObjetivo) ing+=alquilerAnual;
-    if(edad>=edadPension) ing+=escU.pensionAnual;
-    return ing;
-  }
-  function gapEn(edad, incluir){ return Math.max(0, gastoInfladoEn(edad)-ingresosEn(edad,incluir)); }
-
-  function objetivoCapital(edadInicio, incluir){
-    if(S.modoObjetivo==='consumible'){
-      const nMax = Math.max(0, Math.round(S.edadFinDinero-edadInicio));
-      let cap=0;
-      for(let n=0;n<nMax;n++){ cap += gapEn(edadInicio+n, incluir)/Math.pow(1+S.rentCartera/100, n); }
-      return cap;
-    } else {
-      const finBridge = incluir ? Math.max(edadInicio, edadPension) : edadInicio;
-      let cap=0;
-      const nBridge = Math.round(finBridge-edadInicio);
-      for(let n=0;n<nBridge;n++){ cap += gapEn(edadInicio+n, incluir)/Math.pow(1+S.rentCartera/100, n); }
-      const tailGap = gapEn(finBridge, incluir);
-      cap += (25*tailGap)/Math.pow(1+S.rentCartera/100, nBridge);
-      return cap;
-    }
-  }
-
-  // Proyección de patrimonio
-  const rows=[]; let ahorro=S.ahorroLiquido, eeuu=S.accionesEEUU, gsk=S.accionesGSK, inmuebles=S.valorInmuebles, oro=S.valorOro;
-  const horizonte = S.modoObjetivo==='consumible' ? Math.max(S.edadFinDinero, S.edadObjetivo)+5 - S.edadActual : Math.max(45,aniosHasta+35);
-  for(let i=0;i<=horizonte;i++){
-    const edad=S.edadActual+i;
-    if(i>0){
-      ahorro=ahorro*(1+S.rentCartera/100)+S.aportacionAnual;
-      eeuu=eeuu*(1+S.rentCartera/100);
-      gsk=gsk*(1+S.rentGSK/100)+S.accionesGSKAnual;
-      inmuebles=inmuebles*(1+S.revalorizacionInmuebles/100);
-      oro=oro*(1+S.revalorizacionOro/100);
-    }
-    const patrimonioInvertible = ahorro+eeuu+gsk;
-    const patrimonioTotal = patrimonioInvertible + inmuebles + oro;
-    const patrimonioComparado = S.incluirOtrosEnComparativa ? patrimonioTotal : patrimonioInvertible;
-    rows.push({
-      edad, patrimonioInvertible, patrimonioTotal, patrimonioComparado,
-      objetivoSinAyudas: objetivoCapital(edad, false),
-      objetivoConAyudas: objetivoCapital(edad, S.incluirIngresosPasivos),
-    });
-  }
-
-  const filaObjetivo = rows.find(r=>r.edad===S.edadObjetivo) || rows[0];
-  return {aniosHasta,escA,escB,escC,eOrdProyectada,aniosSiEsperaOrdinaria,costeConvenioAnual,usaB,escU,edadPension,alquilerAnual,rows,filaObjetivo};
-}
-
-function renderTabs(){
-  const tabs=[['patrimonio','Tu patrimonio'],['ingresos','Ingresos y pensión'],['objetivo','Tu objetivo'],['combinado','Proyección'],['escenarios','Comparar escenarios'],['loteria','Lotería / herencia']];
+function renderNav(){
+  const tabs=[['principal','Tu jubilación'],['comparar','Comparar caminos'],['loteria','Lotería o herencia']];
   document.getElementById('tabs').innerHTML = tabs.map(([id,label])=>
     `<button class="${currentTab===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join('');
 }
-window.setTab=function(id){ currentTab=id; render(); }
+window.setTab=function(id){ currentTab=id; renderNav(); showTab(id); }
 
-function renderPatrimonio(D){
-  document.getElementById('panel-patrimonio').innerHTML = `
-  <div class="grid">
-    <div class="card"><h2><span class="tag">Invertible</span>Cartera financiera</h2>
-      ${field('ahorroLiquido','Ahorro / cuenta líquida','€',1000)}
-      ${field('accionesEEUU','Acciones / fondos diversificados','€',1000)}
-      ${field('accionesGSK','Otra cartera concentrada (ej. acciones de empresa)','€',1000)}
-      ${field('planPensiones','Plan de pensiones','€',1000,'No disponible hasta la jubilación legal — no cuenta para el objetivo anticipado')}
-      ${field('aportacionAnual','Aportación anual a inversión','€',500)}
-      ${field('accionesGSKAnual','Aportación anual a cartera concentrada','€',500)}
-      ${field('aportacionPlan','Aportación anual a plan de pensiones','€',100)}
-      ${field('rentCartera','Rentabilidad esperada cartera diversificada','%/año',0.1)}
-      ${field('rentGSK','Rentabilidad esperada cartera concentrada','%/año',0.1)}
-    </div>
-    <div class="card"><h2><span class="tag">Otros activos</span>Inmuebles, oro y valores</h2>
-      ${field('valorInmuebles','Valor de inmuebles en alquiler','€',5000)}
-      ${field('alquilerMensualNeto','Alquiler neto mensual que recibes','€/mes',50,'Se cuenta como ingreso pasivo desde tu edad de jubilación')}
-      ${field('revalorizacionInmuebles','Revalorización anual estimada','%/año',0.1)}
-      <div style="height:8px;"></div>
-      ${field('valorOro','Oro, joyas u otros activos de valor','€',1000)}
-      ${field('revalorizacionOro','Revalorización anual estimada','%/año',0.1)}
-      ${toggle('incluirOtrosEnComparativa','Incluir inmuebles y oro en el patrimonio comparado con el objetivo','Si lo desactivas, solo cuentan como colchón informativo — no como capital del que vives')}
-    </div>
-    <div class="card" style="grid-column:1/-1;">
-      <h2>Tu patrimonio a los ${S.edadObjetivo} años</h2>
-      <div class="stat-grid">
-        <div class="stat"><p class="l">Cartera financiera</p><p class="v">${fmtEUR(D.filaObjetivo.patrimonioInvertible)}</p></div>
-        <div class="stat"><p class="l">Inmuebles + oro</p><p class="v">${fmtEUR(D.filaObjetivo.patrimonioTotal-D.filaObjetivo.patrimonioInvertible)}</p></div>
-        <div class="stat"><p class="l">Patrimonio total</p><p class="v">${fmtEUR(D.filaObjetivo.patrimonioTotal)}</p></div>
-        <div class="stat"><p class="l">Patrimonio comparado con tu objetivo</p><p class="v good">${fmtEUR(D.filaObjetivo.patrimonioComparado)}</p></div>
-      </div>
-    </div>
-  </div>`;
+function showTab(id){
+  const D = computeAll();
+  const content = document.getElementById('content');
+  if(id==='principal'){ content.innerHTML = buildTab1(D); initChart1(D); refreshTab1(D); }
+  else if(id==='comparar'){ content.innerHTML = buildTab2(D); initChart2(D); refreshTab2(D); }
+  else { content.innerHTML = buildTab3(); initChart3(); refreshTab3(); }
+}
+function refreshCurrentTab(){
+  const D = computeAll();
+  if(currentTab==='principal'){ refreshTab1(D); updateChart1(D); }
+  else if(currentTab==='comparar'){ refreshTab2(D); updateChart2(D); }
+  else { refreshTab3(); }
 }
 
-function renderIngresos(D){
-  document.getElementById('panel-ingresos').innerHTML = `
-  <div class="grid">
-    <div class="card"><h2><span class="tag">Seguridad Social</span>Tu pensión pública</h2>
-      ${field('aniosCotizados','Años cotizados hasta hoy','años',0.5)}
-      ${field('salarioBrutoAnual','Salario bruto anual medio (proxy de base reguladora)','€',1000,`Se limita a la base máxima 2026: ${fmtEUR(BASE_MAX_MENSUAL*12)}/año. Aproximación, no la base reguladora real.`)}
-      ${toggle('sigueCotizando','Sigo trabajando y cotizando hasta la edad objetivo',`Sumarías ${fmt1(D.aniosHasta)} años más de cotización`)}
-      ${toggle('pagaConvenio','Si dejo de trabajar, pago convenio especial con la SS','Sigues sumando años cotizados de tu bolsillo aunque no trabajes')}
-      ${S.pagaConvenio? field('baseConvenio','Base mensual elegida para el convenio especial','€/mes',50)+`<div class="hint">Coste aproximado: ${fmtEUR(D.costeConvenioAnual)}/año (28,3% contingencias comunes + 0,9% MEI, todo a tu cargo)</div>` : ''}
-      <div class="note">Edad ordinaria que te correspondería: <b>${fmt1(D.escU.eOrd)} años</b>. Pensión mensual estimada a los ${S.edadObjetivo}: <b>${fmtEUR(D.escU.pensionMensual)}</b> (14 pagas).</div>
-      ${!D.escU.cumple? `<div class="note danger">A los ${S.edadObjetivo} años no cumplirías los requisitos de jubilación anticipada voluntaria (mínimo 35 años cotizados y máximo 24 meses de adelanto). No cobrarías hasta los ${fmt1(D.escU.eOrd)}.</div>`:''}
-    </div>
-    <div class="card"><h2>Cómo se combinan tus ingresos</h2>
-      ${toggle('incluirIngresosPasivos','Contar mi pensión pública y alquiler como ingresos que reducen lo que necesito ahorrar','Si lo desactivas, tu objetivo se calcula como si vivieras solo de tu cartera')}
-      <ul class="rules" style="margin-top:14px;">
-        <li><b>Alquiler neto:</b> ${fmtEUR(D.alquilerAnual)}/año, empieza el mismo día que te jubilas.</li>
-        <li><b>Pensión pública:</b> ${fmtEUR(D.escU.pensionAnual)}/año, empieza a los ${fmt1(D.edadPension)} años.</li>
-        <li>Entre tu jubilación y el cobro de la pensión hay un <b>tramo puente</b> que solo cubren tu cartera y el alquiler.</li>
-      </ul>
-    </div>
-  </div>`;
-}
-
-function fvAnnuityFactor(n,r){ if(n<=0) return 0; return r===0? n : (Math.pow(1+r,n)-1)/r; }
-
-function calcularPalancas(D){
-  const objetivoActual = S.incluirIngresosPasivos ? D.filaObjetivo.objetivoConAyudas : D.filaObjetivo.objetivoSinAyudas;
-  const patrimonioActual = D.filaObjetivo.patrimonioComparado;
-  const shortfall = Math.max(0, objetivoActual - patrimonioActual);
-  if(shortfall<=0){
-    let edadPosible = S.edadObjetivo;
-    for(const row of D.rows){
-      const obj = S.incluirIngresosPasivos ? row.objetivoConAyudas : row.objetivoSinAyudas;
-      if(row.patrimonioComparado>=obj){ edadPosible=row.edad; break; }
-    }
-    return {yaLoAlcanzas:true, edadPosible};
-  }
-
-  const n = Math.max(1, Math.round(S.edadObjetivo-S.edadActual));
-  const r = S.rentCartera/100;
-  const extraAnual = shortfall / fvAnnuityFactor(n,r);
-
-  function patrimonioMenosObjetivoConRent(rNuevo){
-    const back=S.rentCartera; S.rentCartera=rNuevo;
-    const DD=computeAll(); S.rentCartera=back;
-    const obj = S.incluirIngresosPasivos? DD.filaObjetivo.objetivoConAyudas : DD.filaObjetivo.objetivoSinAyudas;
-    return DD.filaObjetivo.patrimonioComparado - obj;
-  }
-  let rentNecesaria=null;
-  if(patrimonioMenosObjetivoConRent(40)>=0){
-    let lo=S.rentCartera, hi=40;
-    for(let it=0; it<40; it++){ const mid=(lo+hi)/2; if(patrimonioMenosObjetivoConRent(mid)>=0) hi=mid; else lo=mid; }
-    rentNecesaria=hi;
-  }
-
-  function patrimonioMenosObjetivoConGasto(gNuevo){
-    const back=S.gastoMensual; S.gastoMensual=gNuevo;
-    const DD=computeAll(); S.gastoMensual=back;
-    const obj = S.incluirIngresosPasivos? DD.filaObjetivo.objetivoConAyudas : DD.filaObjetivo.objetivoSinAyudas;
-    return DD.filaObjetivo.patrimonioComparado - obj;
-  }
-  let gastoNecesario=null;
-  if(patrimonioMenosObjetivoConGasto(0)>=0){
-    let lo=0, hi=S.gastoMensual;
-    for(let it=0; it<40; it++){ const mid=(lo+hi)/2; if(patrimonioMenosObjetivoConGasto(mid)>=0) lo=mid; else hi=mid; }
-    gastoNecesario=lo;
-  }
-
-  let edadNecesaria=null;
-  for(const row of D.rows){
-    if(row.edad<S.edadObjetivo) continue;
-    const obj = S.incluirIngresosPasivos? row.objetivoConAyudas : row.objetivoSinAyudas;
-    if(row.patrimonioComparado>=obj){ edadNecesaria=row.edad; break; }
-  }
-
-  return {yaLoAlcanzas:false, shortfall, extraAnual, rentNecesaria, gastoNecesario, edadNecesaria};
-}
-
-function renderPalancas(D){
-  const P = calcularPalancas(D);
-  if(P.yaLoAlcanzas){
-    return `<div class="card" style="margin-top:16px;">
-      <h2>Cómo alcanzarlo</h2>
-      <div class="note">Ya tienes capital suficiente a los ${S.edadObjetivo} años. De hecho, con estos números podrías plantearte jubilarte desde los <b>${fmt1(P.edadPosible)} años</b>.</div>
-    </div>`;
-  }
-  return `<div class="card" style="margin-top:16px;">
-    <h2>Cómo alcanzarlo — te faltan ${fmtEUR(P.shortfall)}</h2>
-    <p class="hint" style="margin-bottom:14px;">Cuatro formas distintas de cerrar ese hueco. No hace falta hacerlas todas: elige la que más te encaje, o combina un poco de cada una.</p>
-    <div class="stat-grid">
-      <div class="stat"><p class="l">Ahorra esto de más cada año</p><p class="v good">+${fmtEUR(P.extraAnual)}/año</p></div>
-      <div class="stat"><p class="l">O sube tu rentabilidad a</p><p class="v ${P.rentNecesaria!==null?'good':'bad'}">${P.rentNecesaria!==null?fmt1(P.rentNecesaria)+'%/año':'no es realista solo con esto'}</p></div>
-      <div class="stat"><p class="l">O baja tu gasto mensual a</p><p class="v ${P.gastoNecesario!==null?'good':'bad'}">${P.gastoNecesario!==null?fmtEUR(P.gastoNecesario)+'/mes':'no alcanza ni a coste cero'}</p></div>
-      <div class="stat"><p class="l">O retrasa tu jubilación hasta</p><p class="v ${P.edadNecesaria!==null?'good':'bad'}">${P.edadNecesaria!==null?fmt1(P.edadNecesaria)+' años':'más de 30 años vista'}</p></div>
-    </div>
-    <div class="note" style="margin-top:14px;">Estas cuatro cifras son alternativas independientes entre sí (cada una asume que solo cambias esa variable). En la vida real seguramente te compense mover un poco de varias a la vez.</div>
-  </div>`;
-}
-
-function renderObjetivo(D){
-  const edadPensionRound = Math.round(D.edadPension*10)/10;
-  const finLinea = S.modoObjetivo==='consumible' ? S.edadFinDinero : Math.max(S.edadObjetivo+20, D.edadPension+15);
-  const total = Math.max(1, finLinea - S.edadActual);
-  const pTrabajo = Math.min(100, ((S.edadObjetivo-S.edadActual)/total)*100);
-  const pPuente = Math.min(100-pTrabajo, ((D.edadPension-S.edadObjetivo)/total)*100);
-  const pPension = Math.max(0, 100-pTrabajo-pPuente);
-
-  document.getElementById('panel-objetivo').innerHTML = `
+/* ===================== Tab 1: Tu jubilación ===================== */
+function buildTab1(D){
+  return `
   <div class="card">
-    <h2>Tu línea de tiempo</h2>
-    <div class="timeline">
-      <div class="bar">
-        <div class="seg trabajo" style="width:${pTrabajo}%"></div>
-        <div class="seg puente" style="width:${pPuente}%"></div>
-        <div class="seg pension" style="width:${pPension}%"></div>
-      </div>
-      <div class="marks">
-        <div class="mark" style="left:0%"><b>${fmt1(S.edadActual)}</b>hoy</div>
-        <div class="mark" style="left:${pTrabajo}%"><b>${fmt1(S.edadObjetivo)}</b>jubilación</div>
-        ${pPuente>0.5?`<div class="mark" style="left:${pTrabajo+pPuente}%"><b>${edadPensionRound}</b>pensión</div>`:''}
-        <div class="mark" style="left:100%"><b>${S.modoObjetivo==='consumible'?fmt1(S.edadFinDinero):'∞'}</b>${S.modoObjetivo==='consumible'?'fin':'indefinido'}</div>
-      </div>
+    <h2>Cuéntanos tu situación</h2>
+    <div class="grid2">
+      ${field('edadActual','Tu edad actual','años')}
+      ${field('edadObjetivo','Edad a la que te quieres jubilar','años')}
+      ${field('patrimonioActual','Ahorros e inversiones que ya tienes','€',1000)}
+      ${field('aportacionMensual','Cuánto ahorras o inviertes al mes','€/mes',50)}
+      ${field('gastoMensual','Gasto mensual que quieres cubrir jubilado','€/mes',50)}
+      ${field('aniosCotizados','Años que llevas cotizados a la Seg. Social','años',0.5)}
+      ${field('salarioBrutoMensual','Tu salario bruto mensual medio','€/mes',100,'Para estimar tu pensión pública')}
     </div>
-    <div class="legend-row">
-      <span><i style="background:var(--gold)"></i>Trabajando / ahorrando</span>
-      <span><i style="background:#d9c27a"></i>Jubilado, sin pensión aún (tramo puente)</span>
-      <span><i style="background:var(--emerald)"></i>Jubilado y cobrando pensión${S.alquilerMensualNeto>0?' / alquiler':''}</span>
+    ${toggle('contarPension','Contar mi pensión pública al calcular cuánto necesito','Si la desactivas, el cálculo asume que vives solo de tus ahorros')}
+
+    <button id="advanced-btn" class="advanced-toggle" onclick="toggleAdvanced()">+ Ajustes avanzados (rentabilidad, inflación, otros ingresos...)</button>
+    <div id="advanced-box" class="advanced-box" style="display:none;">
+      <div class="grid2">
+        ${field('rentabilidad','Rentabilidad anual esperada de tu inversión','%/año',0.1)}
+        ${field('inflacion','Inflación estimada','%/año',0.1)}
+        ${field('ingresoPasivoMensual','Otros ingresos mensuales (alquiler, etc.)','€/mes',50)}
+        ${field('edadFinDinero','Si decides gastarte el capital, ¿hasta qué edad?','años',1)}
+      </div>
     </div>
   </div>
 
-  <div class="grid" style="margin-top:16px;">
-    <div class="card">
-      <h2>¿Cómo quieres que dure tu dinero?</h2>
-      <div class="segmented">
-        <button class="${S.modoObjetivo==='perpetuo'?'active':''}" onclick="setModo('perpetuo')">Cartera que reinvierte<br><span style="font-weight:400;opacity:.85;">dura indefinidamente, regla del 4%</span></button>
-        <button class="${S.modoObjetivo==='consumible'?'active':''}" onclick="setModo('consumible')">Capital que se consume<br><span style="font-weight:400;opacity:.85;">te lo vas gastando hasta una edad</span></button>
+  <div class="card result-card">
+    <h2>Tu resultado</h2>
+    <div class="big-result">
+      <div>
+        <p class="l">A los <span id="o-edadObjetivo"></span> años tendrías</p>
+        <p id="o-patrimonio" class="v-xl"></p>
       </div>
-      ${S.modoObjetivo==='consumible'? field('edadFinDinero','¿Hasta qué edad quieres que te dure el dinero?','años',1,'Se suma cada año de gasto futuro, descontado a la rentabilidad que hayas puesto en tu cartera (0% si no vas a invertir más)') : ''}
-      <div class="note">
-        ${S.modoObjetivo==='perpetuo'
-          ? 'Asumimos que tu capital sigue invertido y retiras un 4% al año — el dinero, en la mayoría de escenarios históricos, no se agota nunca. Es el modelo clásico FIRE.'
-          : 'Sumamos, año a año, el gasto que tendrás que cubrir hasta la edad que has puesto, descontando el crecimiento de tu cartera. Si pones 0% de rentabilidad, es literalmente la suma de todos los gastos futuros — sin magia de interés compuesto.'}
-      </div>
+      <div id="o-badge-wrap"><span id="o-badge" class="badge"></span></div>
     </div>
-    <div class="card">
-      <h2>Objetivo de capital a los ${S.edadObjetivo} años</h2>
-      <div class="stat-grid">
-        <div class="stat"><p class="l">Sin pensión ni alquiler</p><p class="v">${fmtEUR(D.filaObjetivo.objetivoSinAyudas)}</p></div>
-        <div class="stat"><p class="l">Con pensión y alquiler</p><p class="v">${fmtEUR(D.filaObjetivo.objetivoConAyudas)}</p></div>
-      </div>
-      <div class="kv" style="margin-top:14px;"><span class="k">Tu patrimonio comparado</span><span class="v strong">${fmtEUR(D.filaObjetivo.patrimonioComparado)}</span></div>
-      <div class="kv"><span class="k">Objetivo aplicado (según tu interruptor de ingresos)</span><span class="v strong">${fmtEUR(S.incluirIngresosPasivos?D.filaObjetivo.objetivoConAyudas:D.filaObjetivo.objetivoSinAyudas)}</span></div>
-      <div class="kv"><span class="k">¿Lo alcanzas?</span><span class="v strong" style="color:${D.filaObjetivo.patrimonioComparado>=(S.incluirIngresosPasivos?D.filaObjetivo.objetivoConAyudas:D.filaObjetivo.objetivoSinAyudas)?'var(--emerald)':'var(--coral)'}">${D.filaObjetivo.patrimonioComparado>=(S.incluirIngresosPasivos?D.filaObjetivo.objetivoConAyudas:D.filaObjetivo.objetivoSinAyudas)?'Sí':'No'}</span></div>
+    <div class="stat-grid">
+      <div class="stat"><p class="l">Para que te dure toda la vida (regla del 4%)</p><p id="o-objPerp" class="v"></p></div>
+      <div class="stat"><p class="l">Para que te dure hasta los <span id="o-edadFin1"></span> años</p><p id="o-objCons" class="v"></p></div>
+      <div class="stat"><p class="l">Pensión pública estimada</p><p id="o-pension" class="v good"></p></div>
+      <div class="stat"><p class="l">La cobrarías desde los</p><p id="o-edadPension" class="v"></p></div>
+    </div>
+    <div id="o-warnMinimo" class="note danger" style="display:none;"></div>
+    <div id="o-warnAnticipada" class="note danger" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Tu patrimonio frente a lo que necesitas</h2>
+    <div style="position:relative;height:300px;"><canvas id="chart1" role="img" aria-label="Evolución del patrimonio frente al objetivo de jubilación"></canvas></div>
+    <div class="legend-row" style="margin-top:12px;">
+      <span><i style="background:#0ea975"></i>Tu patrimonio</span>
+      <span><i style="background:#e0a020"></i>Lo que necesitas para que te dure siempre</span>
     </div>
   </div>
-  ${renderPalancas(D)}`;
+
+  <div class="card" id="palancas-card"></div>
+  `;
 }
-
-function areaGradient(ctx, chartArea, rgb){
-  if(!chartArea) return `rgba(${rgb},0.18)`;
-  const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-  g.addColorStop(0, `rgba(${rgb},0.42)`);
-  g.addColorStop(1, `rgba(${rgb},0.02)`);
+function initChart1(D){
+  const ctx=document.getElementById('chart1');
+  if(charts.c1) charts.c1.destroy();
+  charts.c1 = new Chart(ctx,{
+    type:'line',
+    data:{ labels:[], datasets:[
+      {label:'Tu patrimonio', data:[], borderColor:'#0ea975', backgroundColor:(c)=>areaGradient(c.chart.ctx,c.chart.chartArea,'14,169,117'), fill:true, tension:.15, pointRadius:0, borderWidth:3.5},
+      {label:'Objetivo (para siempre)', data:[], borderColor:'#e0a020', borderDash:[7,4], pointRadius:0, borderWidth:3, fill:false},
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, animation:false,
+      scales:{ x:{title:{display:true,text:'Edad'}, grid:{color:'#eee9d8'}}, y:{ticks:{callback:v=>(v/1000)+'k €'}, grid:{color:'#eee9d8'}} },
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtEUR(c.parsed.y)}} } }
+  });
+}
+function areaGradient(ctx, area, rgb){
+  if(!area) return `rgba(${rgb},0.18)`;
+  const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+  g.addColorStop(0, `rgba(${rgb},0.42)`); g.addColorStop(1, `rgba(${rgb},0.02)`);
   return g;
 }
-
-function renderCombinado(D){
-  const okSinAyudas = D.filaObjetivo.patrimonioComparado >= D.filaObjetivo.objetivoSinAyudas;
-  const okConAyudas = D.filaObjetivo.patrimonioComparado >= D.filaObjetivo.objetivoConAyudas;
-  document.getElementById('panel-combinado').innerHTML = `
-  <div class="card" style="background:var(--paper-2);border:none;">
-    <p style="margin:0;font-size:13.5px;line-height:1.6;">
-      Estas dos gráficas comparan la misma línea verde (tu patrimonio, creciendo con tus aportaciones y rentabilidad) contra dos objetivos distintos: uno que ignora la pensión pública y el alquiler, y otro que sí los cuenta. Donde la línea verde cruza por encima de la de puntos, ya tendrías capital suficiente para jubilarte a esa edad.
-    </p>
-  </div>
-
-  <div class="card" style="margin-top:16px;">
-    <h2>1 · Contando solo tu cartera (sin pensión ni alquiler)</h2>
-    <div style="position:relative;height:300px;"><canvas id="chartSinAyudas" role="img" aria-label="Patrimonio frente al objetivo sin contar pensión ni alquiler"></canvas></div>
-    <div class="legend-row" style="margin-top:14px;">
-      <span><i style="background:#0ea975"></i>Tu patrimonio (crece con tus aportaciones)</span>
-      <span><i style="background:#e08a1e"></i>Capital que necesitarías a cada edad, viviendo solo de tu cartera</span>
-    </div>
-    <div class="note ${okSinAyudas?'':'danger'}" style="margin-top:12px;">
-      A los ${S.edadObjetivo} años: tendrías <b>${fmtEUR(D.filaObjetivo.patrimonioComparado)}</b> y necesitarías <b>${fmtEUR(D.filaObjetivo.objetivoSinAyudas)}</b> —
-      ${okSinAyudas ? `te sobrarían ${fmtEUR(D.filaObjetivo.patrimonioComparado-D.filaObjetivo.objetivoSinAyudas)}.` : `te faltarían ${fmtEUR(D.filaObjetivo.objetivoSinAyudas-D.filaObjetivo.patrimonioComparado)}.`}
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:16px;">
-    <h2>2 · Contando también tu pensión y alquiler</h2>
-    <div style="position:relative;height:300px;"><canvas id="chartConAyudas" role="img" aria-label="Patrimonio frente al objetivo contando pensión y alquiler"></canvas></div>
-    <div class="legend-row" style="margin-top:14px;">
-      <span><i style="background:#0ea975"></i>Tu patrimonio (crece con tus aportaciones)</span>
-      <span><i style="background:#7c5cf0"></i>Capital que necesitarías, ya con pensión pública y alquiler cubriendo parte del gasto</span>
-    </div>
-    <div class="note ${okConAyudas?'':'danger'}" style="margin-top:12px;">
-      A los ${S.edadObjetivo} años: tendrías <b>${fmtEUR(D.filaObjetivo.patrimonioComparado)}</b> y necesitarías <b>${fmtEUR(D.filaObjetivo.objetivoConAyudas)}</b> —
-      ${okConAyudas ? `te sobrarían ${fmtEUR(D.filaObjetivo.patrimonioComparado-D.filaObjetivo.objetivoConAyudas)}.` : `te faltarían ${fmtEUR(D.filaObjetivo.objetivoConAyudas-D.filaObjetivo.patrimonioComparado)}.`}
-      Normalmente este objetivo es más bajo que el de arriba, porque parte del gasto ya lo cubren tu pensión y tu alquiler.
-    </div>
-  </div>`;
-
-  const data=D.rows.filter(r=>r.edad<=(S.modoObjetivo==='consumible'?S.edadFinDinero:S.edadObjetivo+30));
-  const commonScales = { x:{title:{display:true,text:'Edad'}, grid:{color:'#eee9d8'}}, y:{ticks:{callback:v=>(v/1000)+'k €'}, grid:{color:'#eee9d8'}} };
-
-  const ctx1=document.getElementById('chartSinAyudas');
-  if(charts.sinAyudas) charts.sinAyudas.destroy();
-  charts.sinAyudas = new Chart(ctx1,{
-    type:'line',
-    data:{ labels:data.map(r=>r.edad),
-      datasets:[
-        {label:'Tu patrimonio', data:data.map(r=>r.patrimonioComparado), borderColor:'#0ea975', backgroundColor:(c)=>areaGradient(c.chart.ctx,c.chart.chartArea,'14,169,117'), fill:true, tension:.15, pointRadius:0, borderWidth:3.5},
-        {label:'Objetivo sin ayudas', data:data.map(r=>r.objetivoSinAyudas), borderColor:'#e08a1e', borderDash:[7,4], pointRadius:0, borderWidth:3.5, fill:false},
-      ]},
-    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-      scales: commonScales,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtEUR(c.parsed.y)}} } }
-  });
-
-  const ctx2=document.getElementById('chartConAyudas');
-  if(charts.conAyudas) charts.conAyudas.destroy();
-  charts.conAyudas = new Chart(ctx2,{
-    type:'line',
-    data:{ labels:data.map(r=>r.edad),
-      datasets:[
-        {label:'Tu patrimonio', data:data.map(r=>r.patrimonioComparado), borderColor:'#0ea975', backgroundColor:(c)=>areaGradient(c.chart.ctx,c.chart.chartArea,'14,169,117'), fill:true, tension:.15, pointRadius:0, borderWidth:3.5},
-        {label:'Objetivo con pensión y alquiler', data:data.map(r=>r.objetivoConAyudas), borderColor:'#7c5cf0', borderDash:[7,4], pointRadius:0, borderWidth:3.5, fill:false},
-      ]},
-    options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
-      scales: commonScales,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmtEUR(c.parsed.y)}} } }
-  });
+function updateChart1(D){
+  const data = D.rows.filter(r=>r.edad<=Math.max(S.edadFinDinero,S.edadObjetivo+25));
+  charts.c1.data.labels = data.map(r=>r.edad);
+  charts.c1.data.datasets[0].data = data.map(r=>r.patrimonio);
+  charts.c1.data.datasets[1].data = data.map(r=>r.objetivoPerpetuo);
+  charts.c1.update('none');
 }
-
-function renderEscenarios(D){
-  document.getElementById('panel-escenarios').innerHTML = `
-  <div class="card" style="background:var(--paper-2);border:none;">
-    <p style="margin:0;font-size:13.5px;line-height:1.6;">
-      Partimos de esto: hoy tienes <b>${fmt1(S.edadActual)} años</b> y llevas <b>${fmt1(S.aniosCotizados)} años cotizados</b> a la Seguridad Social.
-      Comparamos qué pasa con tu pensión según qué decidas hacer entre hoy y tu jubilación.
-    </p>
-  </div>
-
-  <div class="card" style="margin-top:16px;">
-    <h2>Tres caminos posibles</h2>
-    <div style="position:relative;height:280px;"><canvas id="chartEscenarios" role="img" aria-label="Comparación de pensión mensual estimada en tres escenarios distintos"></canvas></div>
-  </div>
-
-  <div class="grid" style="margin-top:16px;grid-template-columns:1fr 1fr 1fr;">
-    <div class="card"><h2><span class="tag">Camino A</span>Dejas de cotizar ya</h2>
-      <p class="hint" style="margin-bottom:10px;">Dejas de trabajar y de cotizar hoy mismo (${fmt1(S.edadActual)} años), y te jubilas a los ${S.edadObjetivo} con lo que ya llevas acumulado.</p>
-      <div class="kv"><span class="k">Edad de jubilación</span><span class="v">${S.edadObjetivo} años</span></div>
-      <div class="kv"><span class="k">Años cotizados en ese momento</span><span class="v">${fmt1(S.aniosCotizados)}</span></div>
-      <div class="kv"><span class="k">Edad ordinaria que te toca</span><span class="v">${fmt1(D.escA.eOrd)}</span></div>
-      <div class="kv"><span class="k">Meses de adelanto</span><span class="v">${D.escA.mesesAdelanto}</span></div>
-      <div class="kv"><span class="k">Coeficiente reductor</span><span class="v">-${fmt1(D.escA.coef*100)}%</span></div>
-      <div class="kv"><span class="k">Pensión mensual</span><span class="v strong">${fmtEUR(D.escA.pensionMensual)}</span></div>
-    </div>
-    <div class="card"><h2><span class="tag">Camino B</span>Cotizas hasta jubilarte</h2>
-      <p class="hint" style="margin-bottom:10px;">Sigues trabajando (o pagando convenio especial) desde tus ${fmt1(S.edadActual)} hasta los ${S.edadObjetivo} años, y te jubilas anticipadamente ahí.</p>
-      <div class="kv"><span class="k">Edad de jubilación</span><span class="v">${S.edadObjetivo} años</span></div>
-      <div class="kv"><span class="k">Años cotizados en ese momento</span><span class="v">${fmt1(S.aniosCotizados+D.aniosHasta)}</span></div>
-      <div class="kv"><span class="k">Edad ordinaria que te toca</span><span class="v">${fmt1(D.escB.eOrd)}</span></div>
-      <div class="kv"><span class="k">Meses de adelanto</span><span class="v">${D.escB.mesesAdelanto}</span></div>
-      <div class="kv"><span class="k">Coeficiente reductor</span><span class="v">-${fmt1(D.escB.coef*100)}%</span></div>
-      <div class="kv"><span class="k">Pensión mensual</span><span class="v strong">${fmtEUR(D.escB.pensionMensual)}</span></div>
-      ${S.pagaConvenio? `<div class="hint" style="margin-top:8px;">Convenio especial: ${fmtEUR(D.costeConvenioAnual)}/año × ${fmt1(D.aniosHasta)} años = ${fmtEUR(D.costeConvenioAnual*D.aniosHasta)} en total.</div>`:''}
-    </div>
-    <div class="card"><h2><span class="tag">Camino C</span>Esperas a la edad ordinaria</h2>
-      <p class="hint" style="margin-bottom:10px;">Sigues trabajando y cotizando sin jubilarte antes de tiempo, hasta los ${fmt1(D.eOrdProyectada)} años — tu edad ordinaria. Sin coeficiente reductor.</p>
-      <div class="kv"><span class="k">Edad de jubilación</span><span class="v">${fmt1(D.eOrdProyectada)} años</span></div>
-      <div class="kv"><span class="k">Años cotizados en ese momento</span><span class="v">${fmt1(D.aniosSiEsperaOrdinaria)}</span></div>
-      <div class="kv"><span class="k">Edad ordinaria que te toca</span><span class="v">${fmt1(D.escC.eOrd)}</span></div>
-      <div class="kv"><span class="k">Coeficiente reductor</span><span class="v">0% (sin adelanto)</span></div>
-      <div class="kv"><span class="k">Pensión mensual</span><span class="v strong">${fmtEUR(D.escC.pensionMensual)}</span></div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:16px;">
-    <h2>La diferencia, en limpio</h2>
+function renderPalancasHTML(D){
+  const P = calcularPalancas(D);
+  if(P.yaLoAlcanzas){
+    return `<h2>Cómo alcanzarlo</h2>
+      <div class="note">Ya tienes capital suficiente a los ${S.edadObjetivo} años. Con estos números podrías plantearte jubilarte desde los <b>${fmt1(P.edadPosible)} años</b>.</div>`;
+  }
+  return `<h2>Cómo alcanzarlo — te faltan ${fmtEUR(P.shortfall)}</h2>
+    <p class="hint" style="margin-bottom:14px;">Cuatro formas alternativas de cerrar ese hueco. No hace falta hacerlas todas.</p>
     <div class="stat-grid">
-      <div class="stat"><p class="l">B vs. A (seguir cotizando hasta los ${S.edadObjetivo})</p><p class="v good">+${fmtEUR(D.escB.pensionMensual-D.escA.pensionMensual)}/mes</p></div>
-      <div class="stat"><p class="l">C vs. A (esperar a la edad ordinaria)</p><p class="v good">+${fmtEUR(D.escC.pensionMensual-D.escA.pensionMensual)}/mes</p></div>
-      <div class="stat"><p class="l">C vs. B (esperar en vez de jubilarte a los ${S.edadObjetivo})</p><p class="v">+${fmtEUR(D.escC.pensionMensual-D.escB.pensionMensual)}/mes, pero ${fmt1(D.eOrdProyectada-S.edadObjetivo)} años más trabajando</p></div>
-    </div>
-  </div>`;
+      <div class="stat"><p class="l">Ahorra esto de más cada mes</p><p class="v good">+${fmtEUR(P.extraMensual)}/mes</p></div>
+      <div class="stat"><p class="l">O sube tu rentabilidad a</p><p class="v ${P.rentNecesaria!==null?'good':'bad'}">${P.rentNecesaria!==null?fmt1(P.rentNecesaria)+'%/año':'no es realista'}</p></div>
+      <div class="stat"><p class="l">O baja tu gasto mensual a</p><p class="v ${P.gastoNecesario!==null?'good':'bad'}">${P.gastoNecesario!==null?fmtEUR(P.gastoNecesario)+'/mes':'no alcanza'}</p></div>
+      <div class="stat"><p class="l">O retrasa tu jubilación hasta</p><p class="v ${P.edadNecesaria!==null?'good':'bad'}">${P.edadNecesaria!==null?fmt1(P.edadNecesaria)+' años':'muy lejos'}</p></div>
+    </div>`;
+}
+function refreshTab1(D){
+  out('o-edadObjetivo', fmt1(S.edadObjetivo));
+  out('o-patrimonio', fmtEUR(D.filaObjetivo.patrimonio));
+  out('o-objPerp', fmtEUR(D.filaObjetivo.objetivoPerpetuo));
+  out('o-objCons', fmtEUR(D.filaObjetivo.objetivoConsumible));
+  out('o-edadFin1', fmt1(S.edadFinDinero));
+  out('o-pension', S.contarPension ? fmtEUR(D.pension.pensionMensual)+'/mes' : 'no incluida');
+  out('o-edadPension', D.pension.cumple ? fmt1(D.edadPension)+' años' : fmt1(D.pension.eOrd)+' años');
 
-  const ctx=document.getElementById('chartEscenarios');
-  if(charts.escenarios) charts.escenarios.destroy();
-  charts.escenarios = new Chart(ctx,{
-    type:'bar',
-    data:{ labels:[`A · Dejas de cotizar ya (${S.edadObjetivo} años)`, `B · Cotizas hasta los ${S.edadObjetivo}`, `C · Esperas a los ${fmt1(D.eOrdProyectada)}`],
-      datasets:[{label:'Pensión mensual estimada', data:[D.escA.pensionMensual,D.escB.pensionMensual,D.escC.pensionMensual], backgroundColor:['#e2462b','#e0a020','#12b57a'], borderRadius:10}]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmtEUR(c.parsed.y)+' / mes'}} },
-      scales:{ y:{ticks:{callback:v=>fmtEUR(v)}}, x:{ticks:{font:{size:11}}} } }
-  });
+  const ok = D.filaObjetivo.patrimonio >= D.filaObjetivo.objetivoPerpetuo;
+  out('o-badge', ok? 'Vas bien encaminado' : 'Aún te falta capital');
+  outClass('o-badge', 'badge '+(ok?'good':'bad'));
+
+  outShow('o-warnMinimo', D.aniosCotizadosFinal < MIN_ANOS_PENSION && S.contarPension);
+  out('o-warnMinimo', `Con ${fmt1(D.aniosCotizadosFinal)} años cotizados a los ${S.edadObjetivo}, no llegarías al mínimo de ${MIN_ANOS_PENSION} años para tener derecho a pensión contributiva. Tu pensión estimada sería 0€ a esa edad.`);
+
+  outShow('o-warnAnticipada', D.aniosCotizadosFinal>=MIN_ANOS_PENSION && !D.pension.cumpleAnticipada);
+  out('o-warnAnticipada', `Para jubilarte antes de tu edad ordinaria (${fmt1(D.pension.eOrd)} años) hace falta un mínimo de ${MIN_ANOS_JUB_ANTICIPADA} años cotizados y no adelantarte más de 24 meses. No cobrarías pensión hasta los ${fmt1(D.pension.eOrd)}.`);
+
+  document.getElementById('palancas-card').innerHTML = renderPalancasHTML(D);
 }
 
-function renderLoteria(){
-  const L = computeLoteria();
-  document.getElementById('panel-loteria').innerHTML = `
+/* ===================== Tab 2: Comparar caminos ===================== */
+function buildTab2(D){
+  return `
+  <div class="card banner-card">
+    <p>Hoy tienes <b>${fmt1(S.edadActual)} años</b> y llevas <b id="o2-anios">${fmt1(S.aniosCotizados)} años</b> cotizados. Comparamos tres caminos posibles con la Seguridad Social.</p>
+  </div>
+
   <div class="card">
-    <h2><span class="tag">Golpe de suerte</span>¿Te ha tocado la lotería, una herencia o una indemnización?</h2>
-    <p style="font-size:13px;color:var(--muted);margin:-6px 0 16px;line-height:1.6;">Mete la cantidad que has recibido de golpe y cuánto quieres gastar al mes. Te decimos hasta qué edad te dura, sin necesidad de que sigas trabajando ni aportando nada más.</p>
-    <div class="grid">
-      <div>
-        ${field('loteriaEdadActual','Tu edad actual','años')}
-        ${field('loteriaCapital','Capital recibido de golpe','€',5000)}
-        ${field('loteriaGastoMensual','Gasto mensual que quieres mantener','€/mes',50)}
-        ${field('loteriaRentabilidad','Rentabilidad esperada si lo inviertes','%/año',0.1,'Pon 0% si vas a dejarlo en una cuenta corriente sin invertir')}
-        ${field('loteriaInflacion','Inflación estimada','%/año',0.1)}
-        ${field('loteriaEdadMax','Hasta qué edad quieres comprobar','años',1)}
-      </div>
-      <div>
-        <div class="stat" style="margin-bottom:18px;">
-          <p class="l">Resultado</p>
-          <p class="v ${L.seAgota?'bad':'good'}" style="font-size:26px;">${L.seAgota ? `Se agota a los ${L.edadAgota} años` : `No se agota antes de los ${S.loteriaEdadMax} años`}</p>
-        </div>
-        <div class="kv"><span class="k">Años que dura</span><span class="v strong">${L.seAgota ? (L.edadAgota-S.loteriaEdadActual)+' años' : `${S.loteriaEdadMax-S.loteriaEdadActual}+ años`}</span></div>
-        <div class="kv"><span class="k">Capital para que dure "para siempre" (4%-style)</span><span class="v strong">${isFinite(L.capitalParaSiempre)?fmtEUR(L.capitalParaSiempre):'—'}</span></div>
-        ${L.seAgota ? `<div class="note danger">Con estos supuestos, tu capital no llega a cubrir el gasto que quieres mantener durante toda tu esperanza de vida. O bajas el gasto mensual, o buscas más rentabilidad, o cuentas con una pensión pública/otros ingresos que lo complementen.</div>` : `<div class="note">Con estos supuestos, el dinero te dura al menos hasta los ${S.loteriaEdadMax} años. Si quieres estar más tranquilo, prueba a subir la edad máxima de comprobación.</div>`}
-      </div>
+    <h2>Ajusta el convenio especial (opcional)</h2>
+    ${toggle('pagaConvenio','Si dejaras de trabajar, ¿pagarías el convenio especial con la Seg. Social?','Sigues sumando años cotizados de tu bolsillo aunque no trabajes')}
+    <div id="convenio-box" style="display:${S.pagaConvenio?'block':'none'};margin-top:10px;">
+      ${field('baseConvenio','Base mensual elegida para el convenio especial','€/mes',50)}
+      <p class="hint" id="o2-costeConvenio"></p>
     </div>
   </div>
-  <div class="card" style="margin-top:16px;">
-    <h2>Cómo evoluciona el capital</h2>
-    <div style="position:relative;height:300px;"><canvas id="chartLoteria" role="img" aria-label="Evolución del capital recibido a lo largo de los años"></canvas></div>
-  </div>`;
 
-  const ctx=document.getElementById('chartLoteria');
-  if(charts.loteria) charts.loteria.destroy();
-  charts.loteria = new Chart(ctx,{
+  <div class="card">
+    <h2>Tres caminos posibles</h2>
+    <div style="position:relative;height:280px;"><canvas id="chart2" role="img" aria-label="Comparación de pensión mensual estimada en tres escenarios"></canvas></div>
+  </div>
+
+  <div class="grid3">
+    <div class="card"><h3><span class="tag">Camino A</span>Dejas de cotizar ya</h3>
+      <p class="hint" style="margin-bottom:10px;">Te jubilas a los ${S.edadObjetivo} con lo que ya llevas cotizado.</p>
+      <div class="kv"><span class="k">Años cotizados</span><span class="v" id="o2-aA"></span></div>
+      <div class="kv"><span class="k">Edad ordinaria que te toca</span><span class="v" id="o2-eordA"></span></div>
+      <div class="kv"><span class="k">Coeficiente reductor</span><span class="v" id="o2-coefA"></span></div>
+      <div class="kv"><span class="k">Pensión mensual</span><span class="v strong" id="o2-pA"></span></div>
+    </div>
+    <div class="card"><h3><span class="tag">Camino B</span>Cotizas hasta jubilarte</h3>
+      <p class="hint" style="margin-bottom:10px;">Sigues cotizando hasta los ${S.edadObjetivo} y te jubilas ahí.</p>
+      <div class="kv"><span class="k">Años cotizados</span><span class="v" id="o2-aB"></span></div>
+      <div class="kv"><span class="k">Edad ordinaria que te toca</span><span class="v" id="o2-eordB"></span></div>
+      <div class="kv"><span class="k">Coeficiente reductor</span><span class="v" id="o2-coefB"></span></div>
+      <div class="kv"><span class="k">Pensión mensual</span><span class="v strong" id="o2-pB"></span></div>
+    </div>
+    <div class="card"><h3><span class="tag">Camino C</span>Esperas a tu edad ordinaria</h3>
+      <p class="hint" style="margin-bottom:10px;">Sin coeficiente reductor, jubilación sin adelanto.</p>
+      <div class="kv"><span class="k">Edad de jubilación</span><span class="v" id="o2-edadC"></span></div>
+      <div class="kv"><span class="k">Años cotizados</span><span class="v" id="o2-aC"></span></div>
+      <div class="kv"><span class="k">Coeficiente reductor</span><span class="v">0%</span></div>
+      <div class="kv"><span class="k">Pensión mensual</span><span class="v strong" id="o2-pC"></span></div>
+    </div>
+  </div>
+  `;
+}
+function initChart2(D){
+  const ctx=document.getElementById('chart2');
+  if(charts.c2) charts.c2.destroy();
+  charts.c2 = new Chart(ctx,{
+    type:'bar',
+    data:{ labels:[], datasets:[{label:'Pensión mensual', data:[], backgroundColor:['#e2462b','#e0a020','#12b57a'], borderRadius:10}] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmtEUR(c.parsed.y)+'/mes'}} },
+      scales:{ y:{ticks:{callback:v=>fmtEUR(v)}} } }
+  });
+}
+function updateChart2(D){
+  charts.c2.data.labels = [`A · Ya (${S.edadObjetivo} a.)`, `B · Cotizando (${S.edadObjetivo} a.)`, `C · Esperar (${fmt1(D.eOrdProy)} a.)`];
+  charts.c2.data.datasets[0].data = [D.escA.pensionMensual, D.escB.pensionMensual, D.escC.pensionMensual];
+  charts.c2.update('none');
+}
+function refreshTab2(D){
+  out('o2-anios', fmt1(S.aniosCotizados));
+  outShow('convenio-box', S.pagaConvenio);
+  out('o2-costeConvenio', `Coste aproximado: ${fmtEUR(D.costeConvenioAnual)}/año`);
+
+  out('o2-aA', fmt1(S.aniosCotizados)+' años');
+  out('o2-eordA', fmt1(D.escA.eOrd)+' años');
+  out('o2-coefA', D.escA.cumple? '-'+fmt1(D.escA.coef*100)+'%' : '—');
+  out('o2-pA', D.escA.cumple? fmtEUR(D.escA.pensionMensual) : '0 € (no cumple requisitos)');
+
+  out('o2-aB', fmt1(D.aniosCotizadosFinal)+' años');
+  out('o2-eordB', fmt1(D.escB.eOrd)+' años');
+  out('o2-coefB', D.escB.cumple? '-'+fmt1(D.escB.coef*100)+'%' : '—');
+  out('o2-pB', D.escB.cumple? fmtEUR(D.escB.pensionMensual) : '0 € (no cumple requisitos)');
+
+  out('o2-edadC', fmt1(D.eOrdProy)+' años');
+  out('o2-aC', fmt1(D.aniosSiEspera)+' años');
+  out('o2-pC', fmtEUR(D.escC.pensionMensual));
+}
+
+/* ===================== Tab 3: Lotería / herencia ===================== */
+function buildTab3(){
+  return `
+  <div class="card">
+    <h2>¿Te ha tocado un pellizco de golpe?</h2>
+    <p class="hint" style="margin:-4px 0 16px;">Lotería, herencia, indemnización... mete la cantidad y cuánto quieres gastar al mes. Te decimos hasta qué edad te dura.</p>
+    <div class="grid2">
+      ${field('loteriaEdadActual','Tu edad actual','años')}
+      ${field('loteriaCapital','Capital recibido de golpe','€',5000)}
+      ${field('loteriaGastoMensual','Gasto mensual que quieres mantener','€/mes',50)}
+      ${field('loteriaRentabilidad','Rentabilidad esperada si lo inviertes','%/año',0.1,'0% si lo dejas en una cuenta sin invertir')}
+      ${field('loteriaInflacion','Inflación estimada','%/año',0.1)}
+      ${field('loteriaEdadMax','Edad hasta la que quieres comprobar','años',1)}
+    </div>
+  </div>
+  <div class="card result-card">
+    <h2>Resultado</h2>
+    <p id="o3-resultado" class="v-xl"></p>
+    <div class="stat-grid" style="margin-top:14px;">
+      <div class="stat"><p class="l">Años que dura</p><p id="o3-anios" class="v"></p></div>
+      <div class="stat"><p class="l">Capital para que dure "para siempre"</p><p id="o3-parasiempre" class="v"></p></div>
+    </div>
+    <div id="o3-nota" class="note"></div>
+  </div>
+  <div class="card">
+    <h2>Cómo evoluciona el capital</h2>
+    <div style="position:relative;height:280px;"><canvas id="chart3" role="img" aria-label="Evolución del capital recibido a lo largo de los años"></canvas></div>
+  </div>
+  `;
+}
+function initChart3(){
+  const ctx=document.getElementById('chart3');
+  if(charts.c3) charts.c3.destroy();
+  charts.c3 = new Chart(ctx,{
     type:'line',
-    data:{ labels:L.serie.map(r=>r.edad),
-      datasets:[{label:'Capital restante', data:L.serie.map(r=>r.capital), borderColor: L.seAgota?'#e2462b':'#0ea975', backgroundColor:(c)=>areaGradient(c.chart.ctx,c.chart.chartArea, L.seAgota?'226,70,43':'14,169,117'), fill:true, tension:.2, pointRadius:0, borderWidth:3}]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      scales:{ x:{title:{display:true,text:'Edad'}}, y:{ticks:{callback:v=>(v/1000)+'k €'}} },
+    data:{ labels:[], datasets:[{label:'Capital restante', data:[], borderColor:'#0ea975', backgroundColor:(c)=>areaGradient(c.chart.ctx,c.chart.chartArea,'14,169,117'), fill:true, tension:.2, pointRadius:0, borderWidth:3}] },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false,
+      scales:{ x:{title:{display:true,text:'Edad'}, grid:{color:'#eee9d8'}}, y:{ticks:{callback:v=>(v/1000)+'k €'}, grid:{color:'#eee9d8'}} },
       plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmtEUR(c.parsed.y)}} } }
   });
 }
+function refreshTab3(){
+  const L = computeLoteria();
+  out('o3-resultado', L.seAgota ? `Se agota a los ${L.edadAgota} años` : `No se agota antes de los ${S.loteriaEdadMax} años`);
+  outClass('o3-resultado', 'v-xl '+(L.seAgota?'bad':'good'));
+  out('o3-anios', L.seAgota ? (L.edadAgota-S.loteriaEdadActual)+' años' : `${S.loteriaEdadMax-S.loteriaEdadActual}+ años`);
+  out('o3-parasiempre', isFinite(L.capitalParaSiempre)? fmtEUR(L.capitalParaSiempre) : '—');
+  outClass('o3-nota', 'note '+(L.seAgota?'danger':''));
+  out('o3-nota', L.seAgota
+    ? 'Con estos supuestos, tu capital no llega a cubrir el gasto que quieres mantener durante toda tu esperanza de vida. Baja el gasto mensual, busca más rentabilidad, o cuenta con una pensión pública u otro ingreso que lo complemente.'
+    : `Con estos supuestos, el dinero te dura al menos hasta los ${S.loteriaEdadMax} años.`);
 
-function render(){
-  renderTabs();
-  const D = computeAll();
-  renderPatrimonio(D);
-  renderIngresos(D);
-  renderObjetivo(D);
-  renderCombinado(D);
-  renderEscenarios(D);
-  renderLoteria();
-  ['patrimonio','ingresos','objetivo','combinado','escenarios','loteria'].forEach(id=>{
-    document.getElementById('panel-'+id).classList.toggle('active', id===currentTab);
-  });
+  charts.c3.data.labels = L.serie.map(r=>r.edad);
+  charts.c3.data.datasets[0].data = L.serie.map(r=>r.capital);
+  charts.c3.data.datasets[0].borderColor = L.seAgota?'#e2462b':'#0ea975';
+  charts.c3.data.datasets[0].backgroundColor = (c)=>areaGradient(c.chart.ctx,c.chart.chartArea, L.seAgota?'226,70,43':'14,169,117');
+  charts.c3.update('none');
 }
-render();
+
+/* ===================== Arranque ===================== */
+renderNav();
+showTab(currentTab);
