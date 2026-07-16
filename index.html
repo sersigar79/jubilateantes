@@ -17,10 +17,87 @@
     <p class="eyebrow">Simulador de jubilación anticipada</p>
     <h1>¿Cuándo puedes <em>parar</em> de trabajar?</h1>
     <p class="sub">Junta tu patrimonio, tus otros ingresos y tu pensión pública española en una sola cuenta, y descubre a qué edad tu dinero te sostiene.</p>
+    <p class="legal-tiny">Herramienta meramente informativa, no es asesoramiento financiero — <button class="link-btn" onclick="toggleLegal()">ver aviso legal</button></p>
   </header>
 
-  <div class="disclaimer">
-    <b>Aviso:</b> esta herramienta es meramente informativa y educativa. No constituye asesoramiento financiero, fiscal, laboral ni jurídico, ni un cálculo oficial de la Seguridad Social. Los resultados son estimaciones basadas en supuestos simplificados que tú introduces y pueden diferir sustancialmente del importe real. No se garantiza su exactitud ni actualización. Antes de tomar cualquier decisión sobre tu jubilación, consulta con un asesor financiero colegiado y usa el <a href="https://www.seg-social.es" target="_blank" rel="noopener">simulador oficial de la Seguridad Social</a>. El uso de esta web implica la aceptación de estas condiciones — ver <button class="link-btn" onclick="toggleLegal()">aviso legal completo</button>.
+  <div class="beforeafter">
+    <div class="ba-card">
+      <svg viewBox="0 0 320 220" role="img" aria-label="Ilustración de una persona estresada en la oficina siendo regañada por su jefe">
+        <rect width="320" height="220" rx="18" fill="#eae6d6"/>
+        <line x1="20" y1="22" x2="120" y2="22" stroke="#d8d3bf" stroke-width="4"/>
+        <line x1="140" y1="22" x2="240" y2="22" stroke="#d8d3bf" stroke-width="4"/>
+        <circle cx="266" cy="46" r="20" fill="#fff" stroke="#c9c4ae" stroke-width="2"/>
+        <line x1="266" y1="46" x2="266" y2="34" stroke="#b3402a" stroke-width="2" stroke-linecap="round"/>
+        <line x1="266" y1="46" x2="275" y2="50" stroke="#b3402a" stroke-width="2" stroke-linecap="round"/>
+        <text x="266" y="72" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#8a8570">23:47</text>
+        <rect x="118" y="150" width="150" height="12" rx="3" fill="#8a6a44"/>
+        <rect x="128" y="162" width="8" height="26" fill="#6e5334"/>
+        <rect x="248" y="162" width="8" height="26" fill="#6e5334"/>
+        <rect x="150" y="118" width="58" height="34" rx="3" fill="#3c4a58"/>
+        <rect x="155" y="122" width="48" height="24" rx="2" fill="#4a7fb5"/>
+        <line x1="160" y1="128" x2="188" y2="128" stroke="#dfe9f2" stroke-width="1.5"/>
+        <line x1="160" y1="133" x2="196" y2="133" stroke="#dfe9f2" stroke-width="1.5"/>
+        <line x1="160" y1="138" x2="180" y2="138" stroke="#dfe9f2" stroke-width="1.5"/>
+        <rect x="150" y="150" width="58" height="6" fill="#2b3540"/>
+        <ellipse cx="182" cy="200" rx="34" ry="7" fill="#dcd6c2"/>
+        <path d="M164 152 Q160 175 168 196 L198 196 Q204 175 200 152 Z" fill="#94a3ad"/>
+        <circle cx="181" cy="140" r="15" fill="#e6b287"/>
+        <path d="M167 133 Q181 120 196 133 Q193 128 181 127 Q169 128 167 133 Z" fill="#4a3a2c"/>
+        <circle cx="176" cy="140" r="1.6" fill="#3a2c22"/>
+        <circle cx="186" cy="140" r="1.6" fill="#3a2c22"/>
+        <path d="M175 146 Q181 143 187 146" stroke="#3a2c22" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+        <path d="M198 128 q6 -4 5 -12 q6 4 2 13" fill="#bcd7ea" opacity=".85"/>
+        <path d="M45 190 Q35 130 55 95 Q60 88 70 88 Q80 88 84 96 Q98 130 90 190 Z" fill="#26364a"/>
+        <circle cx="66" cy="72" r="17" fill="#e6b287"/>
+        <path d="M50 64 Q66 48 84 64 Q80 56 66 55 Q52 56 50 64 Z" fill="#2c2420"/>
+        <path d="M56 68 Q60 63 65 67" stroke="#b3402a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M67 67 Q72 63 76 68" stroke="#b3402a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="66" cy="82" rx="6" ry="4" fill="#8a2a1c"/>
+        <path d="M84 100 Q112 92 120 108" stroke="#26364a" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <circle cx="122" cy="110" r="7" fill="#e6b287"/>
+        <path d="M128 78 L165 62 L172 70 L178 58 L182 72 L188 64 L184 84 Q158 92 132 92 Z" fill="#fff" stroke="#b3402a" stroke-width="2"/>
+        <text x="156" y="82" text-anchor="middle" font-family="Inter,sans-serif" font-weight="700" font-size="16" fill="#b3402a">¡¡!!</text>
+      </svg>
+      <p class="ba-label">Antes: currando hasta las tantas</p>
+    </div>
+    <div class="ba-card">
+      <svg viewBox="0 0 320 220" role="img" aria-label="Ilustración de una persona relajada en la playa bajo una palmera con una piña colada">
+        <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe3f5"/><stop offset="1" stop-color="#eaf8ff"/></linearGradient></defs>
+        <rect width="320" height="220" rx="18" fill="url(#sky)"/>
+        <circle cx="266" cy="42" r="22" fill="#f2c14e"/>
+        <ellipse cx="90" cy="50" rx="26" ry="10" fill="#fff" opacity=".8"/>
+        <ellipse cx="115" cy="45" rx="18" ry="8" fill="#fff" opacity=".7"/>
+        <path d="M0 168 Q80 152 160 168 T320 168 V220 H0 Z" fill="#3aa0c9"/>
+        <path d="M0 178 Q90 194 200 180 T320 186 V220 H0 Z" fill="#e9c988"/>
+        <path d="M46 168 Q40 110 58 66" stroke="#8a5a34" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <g fill="#2f8f5b">
+          <path d="M58 66 Q20 50 8 70 Q34 68 58 78 Z"/>
+          <path d="M58 66 Q90 42 108 58 Q80 62 60 76 Z"/>
+          <path d="M58 66 Q34 34 44 14 Q62 36 62 68 Z"/>
+          <path d="M58 66 Q78 30 100 24 Q86 46 64 70 Z"/>
+        </g>
+        <path d="M248 176 Q244 130 258 96" stroke="#8a5a34" stroke-width="8" fill="none" stroke-linecap="round"/>
+        <g fill="#3aa86b">
+          <path d="M258 96 Q228 82 218 98 Q240 98 258 106 Z"/>
+          <path d="M258 96 Q286 78 300 90 Q278 92 260 104 Z"/>
+          <path d="M258 96 Q244 66 252 50 Q266 70 264 98 Z"/>
+        </g>
+        <path d="M120 186 Q160 172 210 188 L206 198 Q160 184 124 196 Z" fill="#f4efe0" stroke="#d8cfae" stroke-width="1.5"/>
+        <path d="M132 186 Q150 150 180 148 L184 158 Q158 160 144 190 Z" fill="#f4efe0" stroke="#d8cfae" stroke-width="1.5"/>
+        <path d="M144 152 Q168 176 200 186" stroke="#e07a4f" stroke-width="16" fill="none" stroke-linecap="round"/>
+        <circle cx="150" cy="146" r="15" fill="#e6b287"/>
+        <path d="M132 140 Q150 118 172 138 Q170 128 150 126 Q134 128 132 140 Z" fill="#efe0c0" stroke="#d8c186" stroke-width="1.5"/>
+        <ellipse cx="144" cy="148" rx="6" ry="3.4" fill="#2c2420"/>
+        <ellipse cx="156" cy="148" rx="6" ry="3.4" fill="#2c2420"/>
+        <path d="M148 158 Q150 160 152 158" stroke="#8a4a2c" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+        <path d="M196 168 L214 160 L216 176 Z" fill="#e6dcc4" stroke="#c9bb90"/>
+        <line x1="205" y1="164" x2="196" y2="150" stroke="#e6dcc4" stroke-width="3" stroke-linecap="round"/>
+        <path d="M188 148 Q198 128 204 148 Q198 144 188 148 Z" fill="#f2c14e"/>
+        <path d="M198 132 l-3 -12 l7 8 Z" fill="#2f8f5b"/>
+        <path d="M198 130 Q214 120 226 128" stroke="#b3402a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <p class="ba-label">Después: viviendo del patrimonio</p>
+    </div>
   </div>
 
   <nav class="tabs" id="tabs"></nav>
@@ -31,6 +108,64 @@
   <div id="panel-combinado" class="tabpanel"></div>
   <div id="panel-escenarios" class="tabpanel"></div>
   <div id="panel-loteria" class="tabpanel"></div>
+
+  <section class="card" style="margin-top:34px;">
+    <h2 style="margin-bottom:4px;">Enlaces de interés</h2>
+    <p class="hint" style="margin-bottom:16px;">Fuentes oficiales para completar lo que ves aquí — esta web es un punto de partida, no el destino final.</p>
+    <div class="links-grid">
+      <a class="link-card" href="https://sede-tu.seg-social.gob.es" target="_blank" rel="noopener">
+        <span class="lc-tag">Seguridad Social</span>
+        <span class="lc-title">Simulador oficial "Tu Seguridad Social"</span>
+        <span class="lc-desc">Tu cálculo real de pensión, con tus datos de cotización verdaderos.</span>
+      </a>
+      <a class="link-card" href="https://prestaciones.seg-social.es/jubilacion.html" target="_blank" rel="noopener">
+        <span class="lc-tag">Seguridad Social</span>
+        <span class="lc-title">Guía oficial de jubilación</span>
+        <span class="lc-desc">Requisitos, tipos de jubilación anticipada y trámites paso a paso.</span>
+      </a>
+      <a class="link-card" href="https://www.finanzasparatodos.es" target="_blank" rel="noopener">
+        <span class="lc-tag">CNMV · Banco de España</span>
+        <span class="lc-title">Finanzas para Todos</span>
+        <span class="lc-desc">Portal público de educación financiera: ahorro, inversión y fondos, explicado sin conflicto de interés.</span>
+      </a>
+      <a class="link-card" href="https://www.tesoro.es" target="_blank" rel="noopener">
+        <span class="lc-tag">Tesoro Público</span>
+        <span class="lc-title">Letras y Bonos del Tesoro</span>
+        <span class="lc-desc">Cómo invertir directamente en deuda del Estado español.</span>
+      </a>
+      <a class="link-card" href="https://www.cnmv.es" target="_blank" rel="noopener">
+        <span class="lc-tag">CNMV</span>
+        <span class="lc-title">Portal del inversor</span>
+        <span class="lc-desc">Alertas, entidades registradas y cómo protegerte del fraude financiero.</span>
+      </a>
+      <a class="link-card" href="https://www.bde.es" target="_blank" rel="noopener">
+        <span class="lc-tag">Banco de España</span>
+        <span class="lc-title">Educación financiera</span>
+        <span class="lc-desc">Recursos sobre inflación, tipos de interés y estabilidad financiera.</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:16px;">
+    <h2 style="margin-bottom:4px;">Preguntas frecuentes</h2>
+    <p class="hint" style="margin-bottom:16px;">Lo que más nos preguntáis sobre jubilación anticipada y pensión pública en España.</p>
+    <details style="margin-bottom:10px;"><summary style="cursor:pointer;font-weight:500;font-size:13.5px;">¿A qué edad me puedo jubilar anticipadamente en España?</summary>
+      <p class="hint" style="margin-top:8px;">Depende de tus años cotizados. Con la jubilación anticipada voluntaria puedes adelantarte hasta 24 meses respecto a tu edad ordinaria (65 años si tienes 38a3m cotizados o más; si no, 66a10m), siempre que acredites al menos 35 años cotizados. Hay otras vías (anticipada involuntaria por ERE, o para carreras de cotización muy largas) con reglas distintas.</p>
+    </details>
+    <details style="margin-bottom:10px;"><summary style="cursor:pointer;font-weight:500;font-size:13.5px;">¿Cuánto dinero necesito para jubilarme antes de tiempo?</summary>
+      <p class="hint" style="margin-top:8px;">La regla clásica FIRE dice 25 veces tu gasto anual, si vas a vivir de una cartera invertida indefinidamente. Si prefieres un capital que se va gastando hasta una edad concreta, necesitas menos: básicamente la suma de tus gastos futuros, descontando lo que gane tu dinero mientras tanto. Esta web calcula ambos casos.</p>
+    </details>
+    <details style="margin-bottom:10px;"><summary style="cursor:pointer;font-weight:500;font-size:13.5px;">¿Compensa seguir cotizando o pagar el convenio especial antes de jubilarme?</summary>
+      <p class="hint" style="margin-top:8px;">Casi siempre sí: cada año cotizado de más sube el porcentaje de tu base reguladora y reduce el coeficiente reductor por adelanto, lo que se traduce en más pensión de por vida. La pestaña "Comparar escenarios" te muestra la diferencia exacta en tu caso.</p>
+    </details>
+    <details><summary style="cursor:pointer;font-weight:500;font-size:13.5px;">¿Es fiable esta calculadora?</summary>
+      <p class="hint" style="margin-top:8px;">Es una estimación orientativa basada en las reglas públicas de la Seguridad Social y en supuestos que tú introduces — no es un cálculo oficial ni sustituye el simulador de la Seguridad Social ni el consejo de un asesor financiero colegiado.</p>
+    </details>
+  </section>
+
+  <section class="disclaimer" style="margin-top:16px;">
+    <b>Aviso legal:</b> esta herramienta es meramente informativa y educativa. No constituye asesoramiento financiero, fiscal, laboral ni jurídico, ni un cálculo oficial de la Seguridad Social. Los resultados son estimaciones basadas en supuestos simplificados que tú introduces y pueden diferir sustancialmente del importe real. No se garantiza su exactitud ni actualización. Antes de tomar cualquier decisión sobre tu jubilación, consulta con un asesor financiero colegiado y usa el <a href="https://www.seg-social.es" target="_blank" rel="noopener">simulador oficial de la Seguridad Social</a>. El uso de esta web implica la aceptación de estas condiciones — ver <button class="link-btn" onclick="toggleLegal()">aviso legal completo</button>.
+  </section>
 
   <footer>
     Modelo orientativo, sin ninguna validez oficial. La base reguladora real se calcula con tus bases de cotización mensuales de los últimos 25 años (o 27 de los últimos 29, lo que sea más favorable), no con un salario medio estimado. Todos los cálculos se realizan en tu navegador — no se envían ni almacenan tus datos.
