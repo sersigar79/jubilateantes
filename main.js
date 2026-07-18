@@ -72,7 +72,67 @@ const S = {
   pagaConvenio:false, baseConvenio:1200,
   loteriaEdadActual:45, loteriaCapital:300000, loteriaGastoMensual:1500,
   loteriaRentabilidad:4, loteriaInflacion:2.5, loteriaEdadMax:95,
+
+  fechaInicioStr: (()=>{ const d=new Date(); d.setFullYear(d.getFullYear()-5); return d.toISOString().slice(0,10); })(),
+  tipoCese:'improcedente', numPagasFiniquito:14, vacacionesPendientes:0,
 };
+const CUTOFF_TIME = new Date(2012,1,12).getTime(); // reforma laboral: 12/02/2012
+
+function parseFechaInput(str){
+  if(!str) return null;
+  const [y,m,d] = str.split('-').map(Number);
+  if(!y||!m||!d) return null;
+  return new Date(y,m-1,d).getTime();
+}
+function segmentarDias(fechaInicioMs, fechaFinMs){
+  if(fechaInicioMs>=fechaFinMs) return {diasAntes:0, diasDespues:0, diasTotal:0};
+  let diasAntes=0, diasDespues=0;
+  if(fechaInicioMs < CUTOFF_TIME){
+    const finAntes = Math.min(fechaFinMs, CUTOFF_TIME);
+    diasAntes = Math.max(0,(finAntes-fechaInicioMs)/86400000);
+    if(fechaFinMs > CUTOFF_TIME) diasDespues = (fechaFinMs-CUTOFF_TIME)/86400000;
+  } else {
+    diasDespues = (fechaFinMs-fechaInicioMs)/86400000;
+  }
+  return {diasAntes, diasDespues, diasTotal:(fechaFinMs-fechaInicioMs)/86400000};
+}
+function diasDesdeUltimaPagaExtra(hoy){
+  const year=hoy.getFullYear();
+  const corte1=new Date(year,5,30).getTime(), corte2=new Date(year,11,31).getTime();
+  const t=hoy.getTime();
+  let ultimoCorte;
+  if(t>corte2) ultimoCorte=corte2;
+  else if(t>corte1) ultimoCorte=corte1;
+  else ultimoCorte=new Date(year-1,11,31).getTime();
+  return (t-ultimoCorte)/86400000;
+}
+function calcularDespido(){
+  const hoy = Date.now();
+  const inicio = parseFechaInput(S.fechaInicioStr);
+  if(!inicio || inicio>=hoy) return null;
+  const {diasAntes, diasDespues, diasTotal} = segmentarDias(inicio, hoy);
+  const aniosAntes = diasAntes/365.25, aniosDespues = diasDespues/365.25, aniosTotal = diasTotal/365.25;
+  const salarioDiario = (S.salarioBrutoMensual*S.numPagasFiniquito)/365;
+
+  let diasIndem=0;
+  if(S.tipoCese==='improcedente'){
+    const diasTramo1 = aniosAntes>0 ? Math.min(aniosAntes*45, 42*30) : 0;
+    if(diasTramo1 > 24*30){ diasIndem = diasTramo1; }
+    else { diasIndem = Math.min(diasTramo1 + aniosDespues*33, 24*30); }
+  } else if(S.tipoCese==='objetivo'){
+    diasIndem = Math.min(aniosTotal*20, 12*30);
+  } else {
+    diasIndem = 0;
+  }
+  const indemnizacion = diasIndem*salarioDiario;
+  const importeVacaciones = S.vacacionesPendientes*salarioDiario;
+  const diasDesdeExtra = diasDesdeUltimaPagaExtra(new Date());
+  const parteProporcionalExtra = S.numPagasFiniquito>12 ? (S.salarioBrutoMensual*2/365)*diasDesdeExtra : 0;
+  const finiquito = importeVacaciones + parteProporcionalExtra;
+  const total = finiquito + indemnizacion;
+
+  return {aniosTotal, aniosAntes, aniosDespues, salarioDiario, diasIndem, indemnizacion, importeVacaciones, parteProporcionalExtra, finiquito, total};
+}
 
 /* ===================== Motor de cálculo ===================== */
 function computeAll(){
@@ -183,6 +243,17 @@ function toggle(key,label,hint){
   return `<div class="toggle-row"><div><p>${label}</p>${hint?`<p class="hint">${hint}</p>`:''}</div>
     <button class="switch ${S[key]?'on':''}" onclick="onToggle('${key}')"><span></span></button></div>`;
 }
+function fieldDate(key,label,hint){
+  return `<div class="field"><label>${label}</label><div class="row">
+    <input type="date" data-field="${key}" value="${S[key]}" oninput="onStr('${key}',this.value)">
+  </div>${hint?`<div class="hint">${hint}</div>`:''}</div>`;
+}
+function segButtons(key, options){
+  return `<div class="segmented">` + options.map(([val,label])=>
+    `<button class="${String(S[key])===String(val)?'active':''}" onclick="onSeg('${key}','${val}')">${label}</button>`).join('') + `</div>`;
+}
+window.onStr=function(key,val){ S[key]=val; refreshCurrentTab(); }
+window.onSeg=function(key,val){ const n=Number(val); S[key] = isNaN(n)?val:n; showTab(currentTab); }
 function out(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
 function outClass(id,cls){ const el=document.getElementById(id); if(el) el.className=cls; }
 function outShow(id,show){ const el=document.getElementById(id); if(el) el.style.display = show?'':'none'; }
@@ -193,23 +264,16 @@ window.onNum=function(key,val){
   refreshCurrentTab();
 }
 window.onToggle=function(key){ S[key]=!S[key]; showTab(currentTab); }
-window.toggleAdvanced=function(){
-  const box=document.getElementById('advanced-box');
-  const btn=document.getElementById('advanced-btn');
-  const open = box.style.display==='block';
-  box.style.display = open ? 'none' : 'block';
-  btn.textContent = open ? '+ Ajustes avanzados (rentabilidad, inflación, otros ingresos...)' : '– Ocultar ajustes avanzados';
-}
 window.toggleLegal=function(){
   const el=document.getElementById('legal-full');
   el.style.display = el.style.display==='block' ? 'none' : 'block';
 }
 
-let currentTab='principal';
+let currentTab='patrimonio';
 let charts={};
 
 function renderNav(){
-  const tabs=[['principal','Tu jubilación'],['comparar','Comparar caminos'],['loteria','Lotería o herencia']];
+  const tabs=[['patrimonio','Patrimonio'],['ingresos','Ingresos y pensión'],['objetivo','Tu objetivo'],['comparar','Comparar caminos'],['finiquito','Finiquito y despido'],['loteria','Lotería o herencia']];
   document.getElementById('tabs').innerHTML = tabs.map(([id,label])=>
     `<button class="${currentTab===id?'active':''}" onclick="setTab('${id}')">${label}</button>`).join('');
 }
@@ -218,61 +282,96 @@ window.setTab=function(id){ currentTab=id; renderNav(); showTab(id); }
 function showTab(id){
   const D = computeAll();
   const content = document.getElementById('content');
-  if(id==='principal'){ content.innerHTML = buildTab1(D); initChart1(D); refreshTab1(D); }
+  if(id==='patrimonio'){ content.innerHTML = buildPatrimonio(D); refreshPatrimonio(D); }
+  else if(id==='ingresos'){ content.innerHTML = buildIngresos(D); refreshIngresos(D); }
+  else if(id==='objetivo'){ content.innerHTML = buildObjetivo(D); initChart1(D); refreshObjetivo(D); }
   else if(id==='comparar'){ content.innerHTML = buildTab2(D); initChart2(D); refreshTab2(D); }
+  else if(id==='finiquito'){ content.innerHTML = buildFiniquito(); refreshFiniquito(); }
   else { content.innerHTML = buildTab3(); initChart3(); refreshTab3(); }
 }
 function refreshCurrentTab(){
   const D = computeAll();
-  if(currentTab==='principal'){ refreshTab1(D); updateChart1(D); }
+  if(currentTab==='patrimonio'){ refreshPatrimonio(D); }
+  else if(currentTab==='ingresos'){ refreshIngresos(D); }
+  else if(currentTab==='objetivo'){ refreshObjetivo(D); updateChart1(D); }
   else if(currentTab==='comparar'){ refreshTab2(D); updateChart2(D); }
+  else if(currentTab==='finiquito'){ refreshFiniquito(); }
   else { refreshTab3(); }
 }
 
-/* ===================== Tab 1: Tu jubilación ===================== */
-function buildTab1(D){
+/* ===================== Tab: Patrimonio ===================== */
+function buildPatrimonio(D){
   return `
   <div class="card">
-    <h2>Cuéntanos tu situación</h2>
+    <h2>Tu patrimonio</h2>
     <div class="grid2">
       ${field('edadActual','Tu edad actual','años')}
       ${field('edadObjetivo','Edad a la que te quieres jubilar','años')}
       ${field('patrimonioActual','Ahorros e inversiones que ya tienes','€',1000)}
       ${field('aportacionMensual','Cuánto ahorras o inviertes al mes','€/mes',50)}
+      ${field('rentabilidad','Rentabilidad anual esperada de tu inversión','%/año',0.1)}
+      ${field('inflacion','Inflación estimada','%/año',0.1)}
+    </div>
+  </div>
+  <div class="card result-card">
+    <p class="l">A los <span id="op-edad"></span> años, tu patrimonio invertido sería aproximadamente</p>
+    <p id="op-patrimonio" class="v-xl good"></p>
+    <p class="hint">Con estas aportaciones, en <span id="op-anios"></span> años habrás invertido tu propio dinero, y el resto será crecimiento por interés compuesto.</p>
+  </div>`;
+}
+function refreshPatrimonio(D){
+  out('op-edad', fmt1(S.edadObjetivo));
+  out('op-patrimonio', fmtEUR(D.filaObjetivo.patrimonio));
+  out('op-anios', fmt1(D.aniosHasta));
+}
+
+/* ===================== Tab: Ingresos y pensión ===================== */
+function buildIngresos(D){
+  return `
+  <div class="card">
+    <h2>Ingresos y pensión pública</h2>
+    <div class="grid2">
       ${field('gastoMensual','Gasto mensual que quieres cubrir jubilado','€/mes',50)}
       ${field('aniosCotizados','Años que llevas cotizados a la Seg. Social','años',0.5)}
       ${field('salarioBrutoMensual','Tu salario bruto mensual medio','€/mes',100,'Para estimar tu pensión pública')}
+      ${field('ingresoPasivoMensual','Otros ingresos mensuales (alquiler, etc.)','€/mes',50)}
     </div>
     ${toggle('contarPension','Contar mi pensión pública al calcular cuánto necesito','Si la desactivas, el cálculo asume que vives solo de tus ahorros')}
-
-    <button id="advanced-btn" class="advanced-toggle" onclick="toggleAdvanced()">+ Ajustes avanzados (rentabilidad, inflación, otros ingresos...)</button>
-    <div id="advanced-box" class="advanced-box" style="display:none;">
-      <div class="grid2">
-        ${field('rentabilidad','Rentabilidad anual esperada de tu inversión','%/año',0.1)}
-        ${field('inflacion','Inflación estimada','%/año',0.1)}
-        ${field('ingresoPasivoMensual','Otros ingresos mensuales (alquiler, etc.)','€/mes',50)}
-        ${field('edadFinDinero','Si decides gastarte el capital, ¿hasta qué edad?','años',1)}
-      </div>
-    </div>
   </div>
-
   <div class="card result-card">
-    <h2>Tu resultado</h2>
+    <p class="l">Pensión pública estimada, cotizando hasta jubilarte</p>
+    <p id="oi-pension" class="v-xl good"></p>
+    <p class="hint">La cobrarías desde los <span id="oi-edadPension"></span> años (con <span id="oi-anios"></span> años cotizados)</p>
+    <div id="oi-warnMinimo" class="note danger" style="display:none;"></div>
+    <div id="oi-warnAnticipada" class="note danger" style="display:none;"></div>
+  </div>`;
+}
+function refreshIngresos(D){
+  out('oi-pension', fmtEUR(D.pension.pensionMensual)+'/mes');
+  out('oi-edadPension', D.pension.cumple ? fmt1(D.edadPension)+'' : fmt1(D.pension.eOrd)+'');
+  out('oi-anios', fmt1(D.aniosCotizadosFinal));
+  outShow('oi-warnMinimo', D.aniosCotizadosFinal < MIN_ANOS_PENSION);
+  out('oi-warnMinimo', `Con ${fmt1(D.aniosCotizadosFinal)} años cotizados a los ${S.edadObjetivo}, no llegarías al mínimo de ${MIN_ANOS_PENSION} años para tener derecho a pensión contributiva. Tu pensión sería 0€ a esa edad.`);
+  outShow('oi-warnAnticipada', D.aniosCotizadosFinal>=MIN_ANOS_PENSION && !D.pension.cumpleAnticipada);
+  out('oi-warnAnticipada', `Para jubilarte antes de tu edad ordinaria (${fmt1(D.pension.eOrd)} años) hace falta un mínimo de ${MIN_ANOS_JUB_ANTICIPADA} años cotizados y no adelantarte más de 24 meses. No cobrarías pensión hasta los ${fmt1(D.pension.eOrd)}.`);
+}
+
+/* ===================== Tab: Tu objetivo ===================== */
+function buildObjetivo(D){
+  return `
+  <div class="card result-card">
     <div class="big-result">
       <div>
         <p class="l">A los <span id="o-edadObjetivo"></span> años tendrías</p>
         <p id="o-patrimonio" class="v-xl"></p>
       </div>
-      <div id="o-badge-wrap"><span id="o-badge" class="badge"></span></div>
+      <div><span id="o-badge" class="badge"></span></div>
     </div>
     <div class="stat-grid">
       <div class="stat"><p class="l">Para que te dure toda la vida (regla del 4%)</p><p id="o-objPerp" class="v"></p></div>
-      <div class="stat"><p class="l">Para que te dure hasta los <span id="o-edadFin1"></span> años</p><p id="o-objCons" class="v"></p></div>
-      <div class="stat"><p class="l">Pensión pública estimada</p><p id="o-pension" class="v good"></p></div>
-      <div class="stat"><p class="l">La cobrarías desde los</p><p id="o-edadPension" class="v"></p></div>
+      <div class="stat"><p class="l">Para que te dure hasta una edad concreta</p><p id="o-objCons" class="v"></p></div>
     </div>
-    <div id="o-warnMinimo" class="note danger" style="display:none;"></div>
-    <div id="o-warnAnticipada" class="note danger" style="display:none;"></div>
+    <div class="field" style="max-width:220px;margin-top:12px;">${field('edadFinDinero','¿Hasta qué edad quieres asegurar el dinero?','años',1)}</div>
   </div>
 
   <div class="card">
@@ -286,6 +385,16 @@ function buildTab1(D){
 
   <div class="card" id="palancas-card"></div>
   `;
+}
+function refreshObjetivo(D){
+  out('o-edadObjetivo', fmt1(S.edadObjetivo));
+  out('o-patrimonio', fmtEUR(D.filaObjetivo.patrimonio));
+  out('o-objPerp', fmtEUR(D.filaObjetivo.objetivoPerpetuo));
+  out('o-objCons', fmtEUR(D.filaObjetivo.objetivoConsumible)+' (a los '+fmt1(S.edadFinDinero)+')');
+  const ok = D.filaObjetivo.patrimonio >= D.filaObjetivo.objetivoPerpetuo;
+  out('o-badge', ok? 'Vas bien encaminado' : 'Aún te falta capital');
+  outClass('o-badge', 'badge '+(ok?'good':'bad'));
+  document.getElementById('palancas-card').innerHTML = renderPalancasHTML(D);
 }
 function initChart1(D){
   const ctx=document.getElementById('chart1');
@@ -329,28 +438,6 @@ function renderPalancasHTML(D){
       <div class="stat"><p class="l">O retrasa tu jubilación hasta</p><p class="v ${P.edadNecesaria!==null?'good':'bad'}">${P.edadNecesaria!==null?fmt1(P.edadNecesaria)+' años':'muy lejos'}</p></div>
     </div>`;
 }
-function refreshTab1(D){
-  out('o-edadObjetivo', fmt1(S.edadObjetivo));
-  out('o-patrimonio', fmtEUR(D.filaObjetivo.patrimonio));
-  out('o-objPerp', fmtEUR(D.filaObjetivo.objetivoPerpetuo));
-  out('o-objCons', fmtEUR(D.filaObjetivo.objetivoConsumible));
-  out('o-edadFin1', fmt1(S.edadFinDinero));
-  out('o-pension', S.contarPension ? fmtEUR(D.pension.pensionMensual)+'/mes' : 'no incluida');
-  out('o-edadPension', D.pension.cumple ? fmt1(D.edadPension)+' años' : fmt1(D.pension.eOrd)+' años');
-
-  const ok = D.filaObjetivo.patrimonio >= D.filaObjetivo.objetivoPerpetuo;
-  out('o-badge', ok? 'Vas bien encaminado' : 'Aún te falta capital');
-  outClass('o-badge', 'badge '+(ok?'good':'bad'));
-
-  outShow('o-warnMinimo', D.aniosCotizadosFinal < MIN_ANOS_PENSION && S.contarPension);
-  out('o-warnMinimo', `Con ${fmt1(D.aniosCotizadosFinal)} años cotizados a los ${S.edadObjetivo}, no llegarías al mínimo de ${MIN_ANOS_PENSION} años para tener derecho a pensión contributiva. Tu pensión estimada sería 0€ a esa edad.`);
-
-  outShow('o-warnAnticipada', D.aniosCotizadosFinal>=MIN_ANOS_PENSION && !D.pension.cumpleAnticipada);
-  out('o-warnAnticipada', `Para jubilarte antes de tu edad ordinaria (${fmt1(D.pension.eOrd)} años) hace falta un mínimo de ${MIN_ANOS_JUB_ANTICIPADA} años cotizados y no adelantarte más de 24 meses. No cobrarías pensión hasta los ${fmt1(D.pension.eOrd)}.`);
-
-  document.getElementById('palancas-card').innerHTML = renderPalancasHTML(D);
-}
-
 /* ===================== Tab 2: Comparar caminos ===================== */
 function buildTab2(D){
   return `
@@ -431,6 +518,72 @@ function refreshTab2(D){
   out('o2-edadC', fmt1(D.eOrdProy)+' años');
   out('o2-aC', fmt1(D.aniosSiEspera)+' años');
   out('o2-pC', fmtEUR(D.escC.pensionMensual));
+}
+
+/* ===================== Tab: Finiquito y despido ===================== */
+const TIPOS_CESE = {
+  improcedente: {label:'Despido improcedente', desc:'La empresa no acredita una causa válida, o falla en la forma. Es el escenario con mayor indemnización.'},
+  objetivo: {label:'Despido objetivo (procedente)', desc:'Causas económicas, técnicas, organizativas o de producción, reconocidas como válidas.'},
+  disciplinario: {label:'Despido disciplinario (procedente)', desc:'La empresa acredita una falta grave tuya. No genera indemnización, solo finiquito.'},
+  voluntaria: {label:'Baja voluntaria', desc:'Te vas tú. No hay indemnización, solo finiquito.'},
+};
+function buildFiniquito(){
+  return `
+  <div class="card banner-card">
+    <p>El <b>finiquito</b> (vacaciones no disfrutadas + parte proporcional de pagas extra) te lo deben siempre, te vayas como te vayas. La <b>indemnización</b> solo aplica si es un despido, y su importe depende del tipo.</p>
+  </div>
+  <div class="card">
+    <h2>Tu situación</h2>
+    <div class="grid2">
+      ${fieldDate('fechaInicioStr','Fecha de inicio en la empresa')}
+      ${field('salarioBrutoMensual','Tu salario bruto mensual','€/mes',100)}
+      ${field('vacacionesPendientes','Días de vacaciones pendientes de disfrutar','días',1)}
+    </div>
+    <div class="field"><label>Pagas al año</label>${segButtons('numPagasFiniquito',[[12,'12 pagas'],[14,'14 pagas (2 extra)']])}</div>
+    <div class="field" style="margin-top:6px;"><label>Tipo de cese</label>
+      ${segButtons('tipoCese',[['improcedente','Improcedente'],['objetivo','Objetivo'],['disciplinario','Disciplinario'],['voluntaria','Baja voluntaria']])}
+      <p class="hint" id="fq-desc"></p>
+    </div>
+  </div>
+
+  <div class="card result-card">
+    <h2>Lo que te correspondería hoy</h2>
+    <div id="fq-error" class="note danger" style="display:none;">Revisa la fecha de inicio: debe ser una fecha pasada.</div>
+    <div id="fq-body">
+      <div class="big-result">
+        <div>
+          <p class="l">Total estimado a recibir</p>
+          <p id="fq-total" class="v-xl good"></p>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><p class="l">Finiquito (vacaciones + parte proporcional extra)</p><p id="fq-finiquito" class="v"></p></div>
+        <div class="stat"><p class="l">Indemnización por el cese</p><p id="fq-indem" class="v"></p></div>
+        <div class="stat"><p class="l">Antigüedad en la empresa</p><p id="fq-antiguedad" class="v"></p></div>
+        <div class="stat"><p class="l">Días de indemnización aplicados</p><p id="fq-dias" class="v"></p></div>
+      </div>
+      <div id="fq-mixto" class="note" style="display:none;"></div>
+      <div class="note">La indemnización por despido está exenta de IRPF hasta 180.000€, pero <b>solo si la improcedencia se reconoce en conciliación o en sentencia judicial</b> — si la empresa te la paga sin ese reconocimiento formal, tributa como salario. El finiquito real puede variar según tu convenio colectivo: usa esto como estimación de partida, no como cifra definitiva.</div>
+    </div>
+  </div>`;
+}
+function refreshFiniquito(){
+  document.getElementById('fq-desc').textContent = TIPOS_CESE[S.tipoCese].desc;
+  const R = calcularDespido();
+  const err = !R;
+  outShow('fq-error', err);
+  outShow('fq-body', !err);
+  if(err) return;
+
+  out('fq-total', fmtEUR(R.total));
+  out('fq-finiquito', fmtEUR(R.finiquito));
+  out('fq-indem', fmtEUR(R.indemnizacion));
+  out('fq-antiguedad', fmt1(R.aniosTotal)+' años');
+  out('fq-dias', Math.round(R.diasIndem)+' días de salario');
+
+  const mixto = S.tipoCese==='improcedente' && R.aniosAntes>0.05;
+  outShow('fq-mixto', mixto);
+  if(mixto) out('fq-mixto', `Como empezaste antes del 12/02/2012, tu indemnización se calcula en dos tramos: 45 días/año hasta esa fecha (${fmt1(R.aniosAntes)} años) y 33 días/año después (${fmt1(R.aniosDespues)} años), cada tramo con su propio tope legal.`);
 }
 
 /* ===================== Tab 3: Lotería / herencia ===================== */
