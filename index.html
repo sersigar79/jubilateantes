@@ -20,23 +20,47 @@
       <p class="sub">Mete tus números y descubre a qué edad tu patrimonio y tu pensión pública te sostienen — sin hojas de cálculo.</p>
       <p class="legal-tiny">Herramienta meramente informativa, no es asesoramiento financiero — <button class="link-btn" onclick="toggleLegal()">ver aviso legal</button></p>
     </div>
-    <svg class="hero-art" viewBox="0 0 420 300" role="img" aria-label="Gráfico ilustrativo del crecimiento del patrimonio a lo largo del tiempo">
+    <svg class="hero-art" viewBox="0 0 460 340" role="img" aria-label="Tarjeta ilustrativa mostrando el progreso hacia el objetivo de jubilación">
       <defs>
-        <linearGradient id="heroGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#0ea975" stop-opacity="0.30"/>
-          <stop offset="1" stop-color="#0ea975" stop-opacity="0"/>
-        </linearGradient>
+        <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#16231f" flood-opacity="0.16"/>
+        </filter>
       </defs>
-      <circle cx="360" cy="48" r="70" fill="#f3e7c9" opacity="0.5"/>
-      <line x1="40" y1="150" x2="380" y2="150" stroke="#c9a54a" stroke-width="1.5" stroke-dasharray="5 6"/>
-      <path d="M40,240 C120,242 165,175 230,150 C300,123 345,95 380,68 L380,270 L40,270 Z" fill="url(#heroGrad)"/>
-      <path d="M40,240 C120,242 165,175 230,150 C300,123 345,95 380,68" fill="none" stroke="#0ea975" stroke-width="4" stroke-linecap="round"/>
-      <circle cx="40" cy="240" r="6" fill="#b1852c"/>
-      <circle cx="230" cy="150" r="6" fill="#0ea975"/>
-      <circle cx="380" cy="68" r="8" fill="#0ea975" stroke="#faf8f2" stroke-width="3"/>
-      <text x="40" y="262" font-family="Inter,sans-serif" font-size="12" fill="#6b6a5c" text-anchor="middle">Hoy</text>
-      <text x="230" y="172" font-family="Inter,sans-serif" font-size="12" fill="#6b6a5c" text-anchor="middle">Jubilación</text>
-      <text x="380" y="52" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#0a7a54" text-anchor="middle">Objetivo</text>
+
+      <ellipse cx="290" cy="180" rx="210" ry="170" fill="#0ea975" opacity="0.07"/>
+      <circle cx="404" cy="58" r="7" fill="#b1852c" opacity="0.5"/>
+      <circle cx="422" cy="86" r="4" fill="#0ea975" opacity="0.4"/>
+      <circle cx="40" cy="290" r="5" fill="#b1852c" opacity="0.4"/>
+
+      <g transform="rotate(7 250 190)">
+        <rect x="118" y="96" width="250" height="190" rx="22" fill="#f3e7c9" opacity="0.65"/>
+      </g>
+
+      <g transform="rotate(-4 230 175)" filter="url(#softShadow)">
+        <rect x="70" y="50" width="320" height="250" rx="26" fill="#ffffff" stroke="#e6e1cd" stroke-width="1.5"/>
+        <text x="98" y="86" font-family="Inter,sans-serif" font-size="11" font-weight="600" letter-spacing="1.2" fill="#b1852c">TU PROGRESO</text>
+        <text x="98" y="106" font-family="Fraunces,serif" font-size="15" font-weight="500" fill="#16231f">Camino a tu jubilación</text>
+
+        <circle cx="230" cy="190" r="62" fill="none" stroke="#f0ecd9" stroke-width="16"/>
+        <circle cx="230" cy="190" r="62" fill="none" stroke="#0ea975" stroke-width="16" stroke-linecap="round"
+          stroke-dasharray="264.9 389.6" transform="rotate(-90 230 190)"/>
+        <text x="230" y="197" text-anchor="middle" font-family="Fraunces,serif" font-size="38" font-weight="600" fill="#16231f">68%</text>
+        <text x="230" y="216" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b6a5c">de tu objetivo</text>
+
+        <g font-family="Inter,sans-serif" font-size="11.5" font-weight="500" fill="#3d3c33">
+          <rect x="90" y="268" width="84" height="16" rx="8" fill="#e1f3ea"/>
+          <circle cx="100" cy="276" r="3" fill="#0ea975"/>
+          <text x="110" y="280.5">60 años</text>
+
+          <rect x="182" y="268" width="112" height="16" rx="8" fill="#f3e7c9"/>
+          <circle cx="192" cy="276" r="3" fill="#b1852c"/>
+          <text x="202" y="280.5">1.240 €/mes</text>
+
+          <rect x="302" y="268" width="76" height="16" rx="8" fill="#e1f3ea"/>
+          <circle cx="312" cy="276" r="3" fill="#0ea975"/>
+          <text x="322" y="280.5">6% anual</text>
+        </g>
+      </g>
     </svg>
   </header>
 
