@@ -284,8 +284,8 @@ function showTab(id){
   const content = document.getElementById('content');
   if(id==='patrimonio'){ content.innerHTML = buildPatrimonio(D); refreshPatrimonio(D); }
   else if(id==='ingresos'){ content.innerHTML = buildIngresos(D); refreshIngresos(D); }
-  else if(id==='objetivo'){ content.innerHTML = buildObjetivo(D); initChart1(D); refreshObjetivo(D); }
-  else if(id==='comparar'){ content.innerHTML = buildTab2(D); initChart2(D); refreshTab2(D); }
+  else if(id==='objetivo'){ content.innerHTML = buildObjetivo(D); initChart1(D); refreshObjetivo(D); updateChart1(D); }
+  else if(id==='comparar'){ content.innerHTML = buildTab2(D); initChart2(D); refreshTab2(D); updateChart2(D); }
   else if(id==='finiquito'){ content.innerHTML = buildFiniquito(); refreshFiniquito(); }
   else { content.innerHTML = buildTab3(); initChart3(); refreshTab3(); }
 }
