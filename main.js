@@ -645,6 +645,25 @@ function refreshTab3(){
   charts.c3.update('none');
 }
 
+/* ===================== Lista de espera del PDF (Netlify Forms) ===================== */
+const waitlistForm = document.getElementById('waitlist-form');
+if(waitlistForm){
+  waitlistForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const data = new FormData(waitlistForm);
+    fetch('/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams(data).toString(),
+    }).then(()=>{
+      waitlistForm.style.display = 'none';
+      document.getElementById('waitlist-success').style.display = 'block';
+    }).catch(()=>{
+      document.getElementById('waitlist-error').style.display = 'block';
+    });
+  });
+}
+
 /* ===================== Arranque ===================== */
 renderNav();
 showTab(currentTab);
