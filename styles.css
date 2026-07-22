@@ -109,5 +109,12 @@ input[type=number]:focus,input[type=date]:focus{outline:none;border-color:var(--
 
 .ad-slot{border:1px dashed var(--line);border-radius:12px;padding:18px;text-align:center;font-size:11px;color:var(--faint);margin-top:16px;}
 
+.waitlist-card{background:linear-gradient(135deg,var(--emerald-t) 0%,var(--paper) 60%);}
+.waitlist-row{display:flex;gap:10px;flex-wrap:wrap;}
+.waitlist-input{flex:1 1 240px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:16px;font-family:var(--font-body);background:var(--paper);color:var(--ink);}
+.waitlist-input:focus{outline:none;border-color:var(--emerald);box-shadow:0 0 0 3px var(--emerald-t);}
+.waitlist-btn{border:0;background:var(--emerald);color:#fff;font-family:var(--font-body);font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;cursor:pointer;transition:background .15s;}
+.waitlist-btn:hover{background:var(--emerald-d);}
+
 footer{margin-top:34px;border-top:1px solid var(--line);padding-top:20px;font-size:11px;color:var(--faint);line-height:1.7;}
 canvas{max-width:100%;}
