@@ -15,10 +15,10 @@
 <div class="wrap">
   <header class="hero">
     <div>
-      <p class="eyebrow">Simulador de jubilación anticipada</p>
+      <p class="eyebrow">🇪🇸 Simulador de jubilación anticipada — España</p>
       <h1>¿Cuándo puedes <em>parar</em> de trabajar?</h1>
       <p class="sub">Mete tus números y descubre a qué edad tu patrimonio y tu pensión pública te sostienen — sin hojas de cálculo.</p>
-      <p class="legal-tiny">Herramienta meramente informativa, no es asesoramiento financiero — <button class="link-btn" onclick="toggleLegal()">ver aviso legal</button></p>
+      <p class="legal-tiny">Basado en la legislación española (Seguridad Social y Estatuto de los Trabajadores) — no válido para otros países. Herramienta meramente informativa, no es asesoramiento financiero — <button class="link-btn" onclick="toggleLegal()">ver aviso legal</button></p>
     </div>
     <svg class="hero-art" viewBox="0 0 460 340" role="img" aria-label="Tarjeta ilustrativa mostrando el progreso hacia el objetivo de jubilación">
       <defs>
@@ -66,6 +66,22 @@
 
   <nav class="tabs" id="tabs"></nav>
   <div id="content"></div>
+
+  <section class="card waitlist-card">
+    <h2>📄 Informe PDF completo — próximamente</h2>
+    <p class="hint" style="margin-bottom:14px;">Estamos preparando un informe descargable con tu situación completa (patrimonio, pensión, los tres caminos y tu finiquito) y varios escenarios extra que no caben en la web. Apúntate y te avisamos en cuanto esté listo — apuntarte no cuesta nada.</p>
+    <form name="pdf-waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="waitlist-form">
+      <input type="hidden" name="form-name" value="pdf-waitlist" />
+      <p style="position:absolute;left:-9999px;" aria-hidden="true"><label>No rellenar: <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+      <div class="waitlist-row">
+        <input type="email" name="email" required placeholder="tu@email.com" class="waitlist-input" aria-label="Tu correo electrónico">
+        <button type="submit" class="waitlist-btn">Avísame</button>
+      </div>
+      <p class="legal-tiny" style="margin-top:10px;">Solo lo usaremos para avisarte de este informe, nada más — <button type="button" class="link-btn" onclick="toggleLegal()">ver aviso legal</button>.</p>
+    </form>
+    <div id="waitlist-success" class="note" style="display:none;">¡Apuntado! Te escribiremos en cuanto el informe esté disponible.</div>
+    <div id="waitlist-error" class="note danger" style="display:none;">Algo ha fallado al enviar tu email. Inténtalo de nuevo en un momento.</div>
+  </section>
 
   <div class="ad-slot">Espacio publicitario (AdSense) — se activa cuando tengas tráfico</div>
 
